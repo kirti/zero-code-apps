@@ -1,0 +1,35 @@
+{
+  "name": "zero-code-apps",
+  "version": "1.0.0",
+  "description": "Production-quality web apps built with zero human code \u2014 powered by skillforge-ai",
+  "keywords": [
+    "ai",
+    "skillforge-ai",
+    "zero-code",
+    "claude",
+    "gpt",
+    "demos",
+    "no-code"
+  ],
+  "author": "YOUR-NAME",
+  "license": "MIT",
+  "homepage": "https://YOUR-USERNAME.github.io/zero-code-apps",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR-USERNAME/zero-code-apps.git"
+  },
+  "private": true,
+  "scripts": {
+    "dev": "npx serve . --listen 3000",
+    "start": "npx serve . --listen 3000",
+    "setup": "node scripts/setup.js",
+    "postinstall": "node scripts/setup.js"
+  },
+  "devDependencies": {
+    "serve": "^14.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "type": "module"
+}

@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pulse — SaaS Analytics Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:      #06080f;
+  --bg2:     #0b0f1a;
+  --surface: #111827;
+  --surface2:#1a2235;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.14);
+  --text:    #e2e8f4;
+  --muted:   #64748b;
+  --accent:  #6366f1;
+  --accent2: #22d3ee;
+  --green:   #10b981;
+  --red:     #f43f5e;
+  --amber:   #f59e0b;
+  --font:    'Cabinet Grotesk', sans-serif;
+  --mono:    'JetBrains Mono', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden}
+
+/* NAV */
+nav{
+  position:fixed;top:0;width:100%;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 2.5rem;
+  background:rgba(6,8,15,0.85);backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+}
+.logo{font-size:1.3rem;font-weight:900;letter-spacing:-0.03em}
+.logo span{color:var(--accent)}
+.nav-links{display:flex;gap:2rem;list-style:none}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:0.85rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;transition:color 0.2s}
+.nav-links a:hover{color:var(--text)}
+.nav-right{display:flex;gap:0.75rem;align-items:center}
+.btn-ghost{border:1px solid var(--border2);color:var(--text);padding:0.5rem 1.2rem;border-radius:8px;font-size:0.82rem;font-weight:700;text-decoration:none;transition:all 0.2s;background:transparent;cursor:pointer;font-family:var(--font)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:var(--accent);color:#fff;padding:0.5rem 1.2rem;border-radius:8px;font-size:0.82rem;font-weight:700;text-decoration:none;transition:all 0.2s;border:none;cursor:pointer;font-family:var(--font)}
+.btn-primary:hover{opacity:0.85;transform:translateY(-1px)}
+
+/* HERO */
+#hero{
+  min-height:100vh;display:flex;align-items:center;
+  padding:8rem 2.5rem 4rem;position:relative;overflow:hidden;
+}
+.hero-noise{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(ellipse 80% 50% at 50% 0%, rgba(99,102,241,0.12) 0%, transparent 60%);
+}
+.hero-dots{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size:28px 28px;
+  mask-image:radial-gradient(ellipse 60% 60% at 50% 50%, black, transparent);
+}
+.hero-content{position:relative;max-width:780px;margin:0 auto;text-align:center}
+.hero-pill{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);
+  color:var(--accent);padding:0.35rem 1rem;border-radius:100px;
+  font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  margin-bottom:2rem;animation:fadeUp 0.5s ease both;
+}
+.hero-pill-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+h1{
+  font-size:clamp(2.8rem,6vw,5rem);font-weight:900;
+  letter-spacing:-0.04em;line-height:1.0;margin-bottom:1.5rem;
+  animation:fadeUp 0.5s ease 0.1s both;
+}
+h1 em{font-style:normal;color:var(--accent)}
+.hero-sub{
+  font-size:1.1rem;color:var(--muted);line-height:1.7;max-width:520px;
+  margin:0 auto 2.5rem;animation:fadeUp 0.5s ease 0.2s both;
+}
+.hero-btns{display:flex;gap:1rem;justify-content:center;animation:fadeUp 0.5s ease 0.3s both}
+.hero-metrics{
+  display:flex;gap:3rem;justify-content:center;
+  margin-top:5rem;padding-top:3rem;border-top:1px solid var(--border);
+  animation:fadeUp 0.5s ease 0.4s both;
+}
+.hm-val{font-size:2rem;font-weight:900;letter-spacing:-0.03em}
+.hm-label{font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:0.2rem}
+.hm-change{font-size:0.78rem;color:var(--green);margin-top:0.2rem;font-family:var(--mono)}
+
+/* DASHBOARD SECTION */
+section{padding:5rem 2.5rem}
+.sec-label{font-size:0.72rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:0.6rem}
+.sec-title{font-size:2rem;font-weight:900;letter-spacing:-0.02em;margin-bottom:0.75rem}
+.sec-sub{font-size:0.95rem;color:var(--muted);max-width:480px;line-height:1.7;margin-bottom:2.5rem}
+
+/* METRIC CARDS */
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+.metric-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:1.25rem 1.5rem;position:relative;overflow:hidden;transition:border-color 0.2s;
+}
+.metric-card:hover{border-color:var(--border2)}
+.metric-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  opacity:0;transition:opacity 0.2s;
+}
+.metric-card:hover::before{opacity:1}
+.mc-label{font-size:0.72rem;color:var(--muted);font-family:var(--mono);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:0.5rem}
+.mc-value{font-size:1.9rem;font-weight:900;letter-spacing:-0.03em;margin-bottom:0.4rem}
+.mc-change{font-size:0.78rem;font-family:var(--mono);display:flex;align-items:center;gap:0.3rem}
+.up{color:var(--green)}.down{color:var(--red)}
+
+/* CHART GRID */
+.chart-grid{display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+.chart-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;transition:border-color 0.2s}
+.card:hover{border-color:var(--border2)}
+.card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem}
+.card-title{font-size:0.95rem;font-weight:700}
+.card-sub{font-size:0.75rem;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+.chart-wrap{position:relative;height:220px}
+.chart-wrap-sm{position:relative;height:160px}
+
+/* TABS */
+.tabs{display:flex;gap:0.4rem}
+.tab{background:transparent;border:1px solid var(--border);color:var(--muted);padding:0.3rem 0.8rem;border-radius:6px;font-size:0.72rem;cursor:pointer;font-family:var(--font);font-weight:700;transition:all 0.15s}
+.tab.active,.tab:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ACTIVITY TABLE */
+.activity-table{width:100%;border-collapse:collapse}
+.activity-table th{font-size:0.68rem;color:var(--muted);text-align:left;padding:0 1rem 0.75rem;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border);font-family:var(--mono)}
+.activity-table td{padding:0.9rem 1rem;font-size:0.85rem;border-bottom:1px solid var(--border)}
+.activity-table tr:last-child td{border:none}
+.activity-table tr:hover td{background:rgba(255,255,255,0.02)}
+.event-badge{display:inline-flex;align-items:center;gap:0.35rem;padding:0.2rem 0.7rem;border-radius:5px;font-size:0.72rem;font-weight:700;font-family:var(--mono)}
+.badge-green{background:rgba(16,185,129,0.12);color:var(--green)}
+.badge-blue{background:rgba(99,102,241,0.12);color:var(--accent)}
+.badge-amber{background:rgba(245,158,11,0.12);color:var(--amber)}
+.badge-red{background:rgba(244,63,94,0.12);color:var(--red)}
+.avatar{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;margin-right:0.5rem;flex-shrink:0}
+
+/* PRICING */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;max-width:900px;margin:0 auto}
+.plan-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  padding:2rem;position:relative;transition:all 0.2s;
+}
+.plan-card:hover{transform:translateY(-4px);border-color:var(--border2)}
+.plan-card.featured{border:2px solid var(--accent);background:rgba(99,102,241,0.06)}
+.featured-badge{
+  position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+  background:var(--accent);color:#fff;padding:0.2rem 1rem;border-radius:100px;
+  font-size:0.7rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;
+}
+.plan-name{font-size:0.8rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem}
+.plan-price{font-size:2.8rem;font-weight:900;letter-spacing:-0.03em;line-height:1}
+.plan-price span{font-size:1rem;font-weight:500;color:var(--muted)}
+.plan-period{font-size:0.8rem;color:var(--muted);margin:0.3rem 0 1.5rem}
+.plan-feature{display:flex;align-items:center;gap:0.6rem;font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem}
+.plan-feature.active{color:var(--text)}
+.check{color:var(--green);font-size:0.9rem}
+.cross{color:var(--muted);font-size:0.9rem;opacity:0.4}
+.plan-btn{display:block;text-align:center;padding:0.8rem;border-radius:10px;font-weight:800;font-size:0.88rem;text-decoration:none;margin-top:1.5rem;transition:all 0.2s;cursor:pointer;font-family:var(--font)}
+.plan-btn-outline{border:1px solid var(--border2);color:var(--text);background:transparent}
+.plan-btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.plan-btn-solid{background:var(--accent);color:#fff;border:none}
+.plan-btn-solid:hover{opacity:0.85;transform:translateY(-1px)}
+
+/* INTEGRATIONS */
+.integrations-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:0.75rem}
+.integration-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:1.25rem;text-align:center;transition:all 0.2s;cursor:pointer;
+}
+.integration-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.int-icon{font-size:1.8rem;margin-bottom:0.5rem}
+.int-name{font-size:0.78rem;font-weight:700;color:var(--muted)}
+.int-status{font-size:0.65rem;margin-top:0.2rem;font-family:var(--mono)}
+.status-active{color:var(--green)}
+.status-soon{color:var(--muted);opacity:0.6}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:2rem 2.5rem;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:0.8rem}
+.footer-logo{font-weight:900;font-size:1.1rem;color:var(--text)}.footer-logo span{color:var(--accent)}
+.footer-note{font-family:var(--mono);font-size:0.72rem;opacity:0.5}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+@keyframes countUp{from{opacity:0}to{opacity:1}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">pulse<span>.</span></div>
+  <ul class="nav-links">
+    <li><a href="#dashboard">Dashboard</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#integrations">Integrations</a></li>
+  </ul>
+  <div class="nav-right">
+    <button class="btn-ghost">Sign in</button>
+    <button class="btn-primary">Start free</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-noise"></div>
+  <div class="hero-dots"></div>
+  <div class="hero-content">
+    <div class="hero-pill">
+      <span class="hero-pill-dot"></span>
+      Now in public beta
+    </div>
+    <h1>Analytics that<br>actually <em>move</em> you</h1>
+    <p class="hero-sub">Pulse gives your team a real-time command center — revenue, retention, pipeline, and product metrics in one beautiful dashboard.</p>
+    <div class="hero-btns">
+      <a href="#dashboard" class="btn-primary" style="padding:0.85rem 2rem;font-size:0.95rem">See the dashboard</a>
+      <button class="btn-ghost" style="padding:0.85rem 2rem;font-size:0.95rem">Watch demo</button>
+    </div>
+    <div class="hero-metrics">
+      <div>
+        <div class="hm-val">$4.2M</div>
+        <div class="hm-label">ARR tracked</div>
+        <div class="hm-change">▲ +23% this quarter</div>
+      </div>
+      <div>
+        <div class="hm-val">18K</div>
+        <div class="hm-label">Active users</div>
+        <div class="hm-change">▲ +1,240 this month</div>
+      </div>
+      <div>
+        <div class="hm-val">99.98%</div>
+        <div class="hm-label">Uptime</div>
+        <div class="hm-change">▲ SLA guaranteed</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section id="dashboard" style="padding-top:2rem">
+  <div class="sec-label">Live Dashboard</div>
+  <div class="sec-title">Your metrics, real-time</div>
+  <div class="sec-sub">Every number updates live. Click any chart to drill down.</div>
+
+  <!-- Metrics row -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="mc-label">Monthly Revenue</div>
+      <div class="mc-value">$348,291</div>
+      <div class="mc-change up">▲ +12.4% vs last month</div>
+    </div>
+    <div class="metric-card">
+      <div class="mc-label">Active Users</div>
+      <div class="mc-value">18,472</div>
+      <div class="mc-change up">▲ +1,240 this month</div>
+    </div>
+    <div class="metric-card">
+      <div class="mc-label">Churn Rate</div>
+      <div class="mc-value">2.1%</div>
+      <div class="mc-change up">▼ -0.3% improvement</div>
+    </div>
+    <div class="metric-card">
+      <div class="mc-label">NPS Score</div>
+      <div class="mc-value">71</div>
+      <div class="mc-change up">▲ +4 pts this quarter</div>
+    </div>
+  </div>
+
+  <!-- Charts row 1 -->
+  <div class="chart-grid">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Revenue over time</div>
+          <div class="card-sub">MRR + ARR breakdown</div>
+        </div>
+        <div class="tabs">
+          <button class="tab active" onclick="switchRevChart(this,'3M')">3M</button>
+          <button class="tab" onclick="switchRevChart(this,'6M')">6M</button>
+          <button class="tab" onclick="switchRevChart(this,'1Y')">1Y</button>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Plan distribution</div>
+          <div class="card-sub">By subscription tier</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="planChart"></canvas></div>
+      <div style="margin-top:1rem;display:flex;flex-direction:column;gap:0.4rem">
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;font-family:var(--mono)"><span style="color:var(--accent)">● Pro</span><span>47%</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;font-family:var(--mono)"><span style="color:var(--accent2)">● Starter</span><span>32%</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;font-family:var(--mono)"><span style="color:var(--amber)">● Enterprise</span><span>21%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts row 2 -->
+  <div class="chart-grid-2">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">User growth</div>
+          <div class="card-sub">New vs churned</div>
+        </div>
+      </div>
+      <div class="chart-wrap-sm"><canvas id="growthChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Feature adoption</div>
+          <div class="card-sub">Top 5 features this month</div>
+        </div>
+      </div>
+      <div class="chart-wrap-sm"><canvas id="featureChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Activity table -->
+  <div class="card" style="margin-top:1.5rem">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Recent activity</div>
+        <div class="card-sub">Last 24 hours</div>
+      </div>
+    </div>
+    <table class="activity-table">
+      <thead><tr>
+        <th>User</th><th>Event</th><th>Plan</th><th>Value</th><th>Time</th>
+      </tr></thead>
+      <tbody id="activityBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing" style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div style="text-align:center;margin-bottom:3rem">
+    <div class="sec-label" style="justify-content:center;display:flex">Pricing</div>
+    <div class="sec-title" style="font-size:2.5rem">Simple, transparent pricing</div>
+    <div class="sec-sub" style="margin:0 auto">No hidden fees. Cancel any time.</div>
+  </div>
+  <div class="pricing-grid">
+    <div class="plan-card">
+      <div class="plan-name">Starter</div>
+      <div class="plan-price">$29<span>/mo</span></div>
+      <div class="plan-period">per workspace</div>
+      <div class="plan-feature active"><span class="check">✓</span> Up to 5 users</div>
+      <div class="plan-feature active"><span class="check">✓</span> 10 dashboards</div>
+      <div class="plan-feature active"><span class="check">✓</span> 90-day history</div>
+      <div class="plan-feature"><span class="cross">✗</span> Custom metrics</div>
+      <div class="plan-feature"><span class="cross">✗</span> API access</div>
+      <div class="plan-feature"><span class="cross">✗</span> Priority support</div>
+      <a href="#" class="plan-btn plan-btn-outline">Get started</a>
+    </div>
+    <div class="plan-card featured">
+      <span class="featured-badge">Most popular</span>
+      <div class="plan-name">Pro</div>
+      <div class="plan-price">$79<span>/mo</span></div>
+      <div class="plan-period">per workspace</div>
+      <div class="plan-feature active"><span class="check">✓</span> Up to 25 users</div>
+      <div class="plan-feature active"><span class="check">✓</span> Unlimited dashboards</div>
+      <div class="plan-feature active"><span class="check">✓</span> 2-year history</div>
+      <div class="plan-feature active"><span class="check">✓</span> Custom metrics</div>
+      <div class="plan-feature active"><span class="check">✓</span> API access</div>
+      <div class="plan-feature"><span class="cross">✗</span> Priority support</div>
+      <a href="#" class="plan-btn plan-btn-solid">Start free trial</a>
+    </div>
+    <div class="plan-card">
+      <div class="plan-name">Enterprise</div>
+      <div class="plan-price">$299<span>/mo</span></div>
+      <div class="plan-period">per workspace</div>
+      <div class="plan-feature active"><span class="check">✓</span> Unlimited users</div>
+      <div class="plan-feature active"><span class="check">✓</span> Unlimited dashboards</div>
+      <div class="plan-feature active"><span class="check">✓</span> Unlimited history</div>
+      <div class="plan-feature active"><span class="check">✓</span> Custom metrics</div>
+      <div class="plan-feature active"><span class="check">✓</span> API access</div>
+      <div class="plan-feature active"><span class="check">✓</span> Priority support</div>
+      <a href="#" class="plan-btn plan-btn-outline">Contact sales</a>
+    </div>
+  </div>
+</section>
+
+<!-- INTEGRATIONS -->
+<section id="integrations">
+  <div class="sec-label">Integrations</div>
+  <div class="sec-title">Connects to everything</div>
+  <div class="sec-sub">One-click integrations with your existing stack. New integrations added weekly.</div>
+  <div class="integrations-grid">
+    <div class="integration-card"><div class="int-icon">🔷</div><div class="int-name">Stripe</div><div class="int-status status-active">● Connected</div></div>
+    <div class="integration-card"><div class="int-icon">📊</div><div class="int-name">Mixpanel</div><div class="int-status status-active">● Connected</div></div>
+    <div class="integration-card"><div class="int-icon">💬</div><div class="int-name">Slack</div><div class="int-status status-active">● Connected</div></div>
+    <div class="integration-card"><div class="int-icon">📧</div><div class="int-name">HubSpot</div><div class="int-status status-active">● Connected</div></div>
+    <div class="integration-card"><div class="int-icon">🗄️</div><div class="int-name">Postgres</div><div class="int-status status-active">● Connected</div></div>
+    <div class="integration-card"><div class="int-icon">☁️</div><div class="int-name">Salesforce</div><div class="int-status status-soon">Coming soon</div></div>
+    <div class="integration-card"><div class="int-icon">📱</div><div class="int-name">Amplitude</div><div class="int-status status-soon">Coming soon</div></div>
+    <div class="integration-card"><div class="int-icon">🔗</div><div class="int-name">Segment</div><div class="int-status status-soon">Coming soon</div></div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">pulse<span>.</span></div>
+  <div>© 2026 Pulse Analytics · Demo build</div>
+  <div class="footer-note">built with zero human code · skillforge-ai</div>
+</footer>
+
+<script>
+Chart.defaults.color = '#64748b';
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+
+// Revenue chart
+const revData = {
+  '3M': { labels:['Jan','Feb','Mar','Apr','May','Jun'], mrr:[210000,228000,241000,255000,282000,311000], arr:[2520000,2736000,2892000,3060000,3384000,3732000] },
+  '6M': { labels:['Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun'], mrr:[170000,180000,192000,201000,210000,221000,228000,241000,255000,268000,282000,311000], arr:[} },
+  '1Y': { labels:['Q1 2025','Q2','Q3','Q4','Q1 2026','Q2'], mrr:[180000,210000,255000,295000,320000,348000], arr:[2160000,2520000,3060000,3540000,3840000,4176000] }
+};
+// fix the malformed data
+revData['6M'].arr = revData['6M'].mrr.map(v=>v*12);
+
+let revChart;
+function makeGrad(ctx,col,alpha=0.25){const g=ctx.createLinearGradient(0,0,0,220);g.addColorStop(0,col.replace(')',`,${alpha})`).replace('rgb','rgba'));g.addColorStop(1,col.replace(')',',0)').replace('rgb','rgba'));return g;}
+
+function buildRevChart(period='3M'){
+  if(revChart) revChart.destroy();
+  const d = revData[period];
+  const ctx = document.getElementById('revenueChart').getContext('2d');
+  revChart = new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:d.labels,
+      datasets:[
+        {label:'MRR',data:d.mrr,borderColor:'#6366f1',backgroundColor:makeGrad(ctx,'rgb(99,102,241)'),borderWidth:2.5,tension:0.4,fill:true,pointRadius:0,pointHoverRadius:5,yAxisID:'y'},
+        {label:'ARR',data:d.arr,borderColor:'rgba(34,211,238,0.6)',backgroundColor:'transparent',borderWidth:1.5,tension:0.4,fill:false,pointRadius:0,borderDash:[4,4],yAxisID:'y1'}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: $${c.parsed.y.toLocaleString()}`}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{font:{size:10}}},
+        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'K',font:{size:10}},position:'left'},
+        y1:{grid:{display:false},ticks:{callback:v=>'$'+(v/1000000).toFixed(1)+'M',font:{size:10}},position:'right'}
+      }
+    }
+  });
+}
+function switchRevChart(btn,p){document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');buildRevChart(p);}
+buildRevChart();
+
+// Plan donut
+new Chart(document.getElementById('planChart').getContext('2d'),{
+  type:'doughnut',
+  data:{datasets:[{data:[47,32,21],backgroundColor:['#6366f1','#22d3ee','#f59e0b'],borderColor:'#111827',borderWidth:3,hoverOffset:6}]},
+  options:{responsive:true,maintainAspectRatio:false,cutout:'72%',plugins:{legend:{display:false}}}
+});
+
+// Growth bar
+new Chart(document.getElementById('growthChart').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:['Jan','Feb','Mar','Apr','May','Jun'],
+    datasets:[
+      {label:'New',data:[820,940,1080,1120,1240,1380],backgroundColor:'rgba(99,102,241,0.7)',borderRadius:5,borderSkipped:false},
+      {label:'Churned',data:[-180,-160,-140,-200,-120,-140],backgroundColor:'rgba(244,63,94,0.5)',borderRadius:5,borderSkipped:false}
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:10}}},
+      y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{font:{size:10}}}
+    }
+  }
+});
+
+// Feature adoption horizontal bar
+new Chart(document.getElementById('featureChart').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:['Analytics','Dashboards','Alerts','Reports','API'],
+    datasets:[{
+      data:[89,76,68,54,41],
+      backgroundColor:['rgba(99,102,241,0.8)','rgba(99,102,241,0.65)','rgba(99,102,241,0.5)','rgba(99,102,241,0.35)','rgba(99,102,241,0.2)'],
+      borderRadius:6,borderSkipped:false
+    }]
+  },
+  options:{
+    indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.x}% adoption`}}},
+    scales:{
+      x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>v+'%',font:{size:10}},max:100},
+      y:{grid:{display:false},ticks:{font:{size:10}}}
+    }
+  }
+});
+
+// Activity table
+const avatarColors = ['rgba(99,102,241,0.2)','rgba(34,211,238,0.2)','rgba(245,158,11,0.2)','rgba(16,185,129,0.2)','rgba(244,63,94,0.2)'];
+const avatarText = ['#6366f1','#22d3ee','#f59e0b','#10b981','#f43f5e'];
+const events = [
+  {user:'Sarah K.',email:'sarah@acme.com',initials:'SK',event:'Upgraded plan','badge':'badge-green','label':'Upgrade',plan:'Pro → Enterprise',value:'+$220/mo',time:'2 min ago'},
+  {user:'Marcus T.',email:'marcus@start.io',initials:'MT',event:'New signup',badge:'badge-blue',label:'Signup',plan:'Starter',value:'$29/mo',time:'8 min ago'},
+  {user:'Priya L.',email:'priya@techco.com',initials:'PL',event:'Dashboard created',badge:'badge-blue',label:'Feature',plan:'Pro',value:'—',time:'14 min ago'},
+  {user:'James R.',email:'james@corp.co',initials:'JR',event:'Payment failed',badge:'badge-red',label:'Alert',plan:'Enterprise',value:'$299/mo',time:'31 min ago'},
+  {user:'Anna M.',email:'anna@studio.co',initials:'AM',event:'Invited 3 users',badge:'badge-amber',label:'Invite',plan:'Pro',value:'3 seats',time:'45 min ago'},
+  {user:'David W.',email:'david@ops.io',initials:'DW',event:'API key created',badge:'badge-blue',label:'API',plan:'Enterprise',value:'—',time:'1 hr ago'},
+];
+document.getElementById('activityBody').innerHTML = events.map((e,i)=>`
+  <tr>
+    <td style="display:flex;align-items:center">
+      <div class="avatar" style="background:${avatarColors[i%5]};color:${avatarText[i%5]}">${e.initials}</div>
+      <div>
+        <div style="font-weight:600;font-size:0.85rem">${e.user}</div>
+        <div style="font-size:0.72rem;color:var(--muted);font-family:var(--mono)">${e.email}</div>
+      </div>
+    </td>
+    <td><span class="event-badge ${e.badge}">${e.label}</span></td>
+    <td style="color:var(--muted);font-family:var(--mono);font-size:0.8rem">${e.plan}</td>
+    <td style="font-family:var(--mono);font-size:0.82rem;color:var(--text)">${e.value}</td>
+    <td style="color:var(--muted);font-family:var(--mono);font-size:0.78rem">${e.time}</td>
+  </tr>
+`).join('');
+
+// Animate metric cards on load
+let animDone = false;
+const observer = new IntersectionObserver(entries=>{
+  if(entries[0].isIntersecting && !animDone){
+    animDone=true;
+    document.querySelectorAll('.mc-value').forEach(el=>{el.style.animation='countUp 0.5s ease both';});
+  }
+},{threshold:0.2});
+observer.observe(document.getElementById('dashboard'));
+</script>
+</body>
+</html>

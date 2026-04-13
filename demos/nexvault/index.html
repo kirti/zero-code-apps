@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexVault — Next-Gen Wealth</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #080c12;
+    --bg2: #0d1420;
+    --bg3: #121b2e;
+    --surface: #141e30;
+    --surface2: #1a2640;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8edf5;
+    --muted: #6b7a99;
+    --accent: #00d4aa;
+    --accent2: #0095ff;
+    --accent3: #ff6b35;
+    --red: #ff4757;
+    --green: #00d4aa;
+    --gold: #f5c842;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-display); overflow-x: hidden; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; width: 100%; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 3rem;
+    background: rgba(8,12,18,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.85rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta { background: var(--accent); color: #000; padding: 0.6rem 1.4rem; border-radius: 6px; font-size: 0.85rem; font-weight: 700; text-decoration: none; letter-spacing: 0.03em; transition: opacity 0.2s; }
+  .nav-cta:hover { opacity: 0.85; }
+
+  /* HERO */
+  #hero {
+    min-height: 100vh; display: flex; align-items: center;
+    padding: 8rem 3rem 4rem;
+    position: relative; overflow: hidden;
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,170,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,170,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+  .hero-glow {
+    position: absolute; top: 20%; right: 10%;
+    width: 500px; height: 500px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,149,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-glow2 {
+    position: absolute; bottom: 10%; left: 5%;
+    width: 400px; height: 400px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,212,170,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-content { position: relative; max-width: 700px; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.25);
+    color: var(--accent); padding: 0.4rem 1rem; border-radius: 100px;
+    font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.6s ease both;
+  }
+  .hero-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+  .hero-title {
+    font-size: clamp(3rem, 7vw, 5.5rem); font-weight: 800;
+    line-height: 1.0; letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.6s ease 0.1s both;
+  }
+  .hero-title .line2 { color: var(--accent); }
+  .hero-subtitle {
+    font-size: 1.1rem; color: var(--muted); line-height: 1.7;
+    max-width: 480px; margin-bottom: 3rem;
+    animation: fadeUp 0.6s ease 0.2s both;
+  }
+  .hero-btns { display: flex; gap: 1rem; animation: fadeUp 0.6s ease 0.3s both; }
+  .btn-primary { background: var(--accent); color: #000; padding: 0.9rem 2rem; border-radius: 8px; font-weight: 700; font-size: 0.95rem; text-decoration: none; transition: all 0.2s; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,212,170,0.3); }
+  .btn-ghost { border: 1px solid var(--border2); color: var(--text); padding: 0.9rem 2rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; text-decoration: none; transition: all 0.2s; }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  .hero-stats {
+    display: flex; gap: 3rem; margin-top: 5rem;
+    padding-top: 3rem; border-top: 1px solid var(--border);
+    animation: fadeUp 0.6s ease 0.4s both;
+  }
+  .stat-num { font-size: 2rem; font-weight: 800; color: var(--text); letter-spacing: -0.02em; }
+  .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  /* TICKER BAR */
+  .ticker-bar {
+    background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    padding: 0.75rem 0; overflow: hidden; position: relative;
+  }
+  .ticker-track { display: flex; gap: 3rem; animation: ticker 35s linear infinite; width: max-content; }
+  .ticker-item { display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; font-family: var(--font-mono); font-size: 0.82rem; }
+  .ticker-symbol { color: var(--text); font-weight: 500; }
+  .ticker-price { color: var(--muted); }
+  .ticker-change.up { color: var(--green); }
+  .ticker-change.down { color: var(--red); }
+
+  /* SECTIONS */
+  section { padding: 5rem 3rem; }
+  .section-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; }
+  .section-title { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 3rem; }
+
+  /* DASHBOARD GRID */
+  .dash-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+  .dash-grid-wide { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+
+  /* CARD */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 1.5rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--border2); }
+  .card-label { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; font-family: var(--font-mono); }
+  .card-value { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
+  .card-change { font-size: 0.82rem; margin-top: 0.4rem; font-family: var(--font-mono); }
+  .up { color: var(--green); }
+  .down { color: var(--red); }
+
+  /* PORTFOLIO CHART */
+  .chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; }
+  .chart-title { font-size: 1rem; font-weight: 700; }
+  .chart-tabs { display: flex; gap: 0.5rem; }
+  .chart-tab { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 0.3rem 0.8rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: var(--font-display); font-weight: 600; transition: all 0.15s; }
+  .chart-tab.active, .chart-tab:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+  .chart-wrap { position: relative; height: 220px; }
+
+  /* WATCHLIST */
+  .watchlist-table { width: 100%; border-collapse: collapse; }
+  .watchlist-table th { font-size: 0.72rem; color: var(--muted); text-align: left; padding: 0 1rem 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; font-family: var(--font-mono); border-bottom: 1px solid var(--border); }
+  .watchlist-table th:last-child, .watchlist-table td:last-child { text-align: right; }
+  .watchlist-table td { padding: 1rem; font-family: var(--font-mono); font-size: 0.85rem; border-bottom: 1px solid var(--border); }
+  .watchlist-table tr:last-child td { border-bottom: none; }
+  .watchlist-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .stock-name { font-family: var(--font-display); font-weight: 600; font-size: 0.9rem; color: var(--text); }
+  .stock-full { font-size: 0.72rem; color: var(--muted); margin-top: 2px; font-family: var(--font-mono); }
+  .spark { display: inline-block; width: 60px; height: 28px; }
+  .mini-badge { display: inline-block; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+  .badge-up { background: rgba(0,212,170,0.12); color: var(--green); }
+  .badge-down { background: rgba(255,71,87,0.12); color: var(--red); }
+
+  /* BANKING */
+  .bank-card {
+    background: linear-gradient(135deg, #1a2f50 0%, #0d1e36 100%);
+    border: 1px solid rgba(0,149,255,0.2);
+    border-radius: 20px; padding: 2rem;
+    position: relative; overflow: hidden;
+  }
+  .bank-card::before {
+    content: ''; position: absolute; top: -50%; right: -20%;
+    width: 300px; height: 300px; border-radius: 50%;
+    background: rgba(0,149,255,0.06);
+  }
+  .bank-card-chip { width: 36px; height: 28px; background: linear-gradient(135deg, #c8a84b, #f5c842); border-radius: 5px; margin-bottom: 2rem; }
+  .bank-card-number { font-family: var(--font-mono); letter-spacing: 0.2em; font-size: 1.1rem; color: rgba(255,255,255,0.7); margin-bottom: 1.5rem; }
+  .bank-card-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+  .bank-card-holder { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.6); }
+  .bank-card-holder strong { display: block; font-size: 1rem; color: #fff; margin-top: 0.2rem; }
+  .bank-card-expiry { text-align: right; font-family: var(--font-mono); font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+  .bank-card-expiry strong { display: block; color: rgba(255,255,255,0.8); font-size: 0.9rem; }
+  .bank-balance-row { display: flex; justify-content: space-between; margin-top: 2rem; }
+  .bank-bal-item { }
+  .bank-bal-label { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .bank-bal-val { font-size: 1.4rem; font-weight: 800; margin-top: 0.25rem; }
+  .txn-list { margin-top: 1.5rem; }
+  .txn { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 0; border-bottom: 1px solid var(--border); }
+  .txn:last-child { border-bottom: none; }
+  .txn-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; margin-right: 0.9rem; flex-shrink: 0; }
+  .txn-left { display: flex; align-items: center; }
+  .txn-name { font-size: 0.88rem; font-weight: 600; }
+  .txn-date { font-size: 0.72rem; color: var(--muted); font-family: var(--font-mono); margin-top: 2px; }
+  .txn-amount { font-family: var(--font-mono); font-size: 0.9rem; font-weight: 500; }
+
+  /* CRYPTO */
+  .crypto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+  .crypto-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.25rem;
+    transition: all 0.2s;
+  }
+  .crypto-card:hover { transform: translateY(-3px); border-color: var(--border2); }
+  .crypto-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: 0.75rem; }
+  .crypto-name { font-size: 0.78rem; color: var(--muted); font-family: var(--font-mono); }
+  .crypto-price { font-size: 1.3rem; font-weight: 800; margin: 0.25rem 0; letter-spacing: -0.02em; }
+  .crypto-chart { height: 50px; margin-top: 0.75rem; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border); padding: 2rem 3rem;
+    display: flex; justify-content: space-between; align-items: center;
+    color: var(--muted); font-size: 0.8rem;
+  }
+  .footer-logo { font-weight: 800; color: var(--text); font-size: 1rem; }
+  .footer-logo span { color: var(--accent); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp { from { opacity:0; transform: translateY(24px); } to { opacity:1; transform: translateY(0); } }
+  @keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  .loading-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 6px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Nex<span>Vault</span></div>
+  <ul class="nav-links">
+    <li><a href="#dashboard">Dashboard</a></li>
+    <li><a href="#watchlist">Watchlist</a></li>
+    <li><a href="#banking">Banking</a></li>
+    <li><a href="#crypto">Crypto</a></li>
+  </ul>
+  <a href="#" class="nav-cta">Get Started</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="hero-content">
+    <div class="hero-badge">Live Markets · Real-Time Data</div>
+    <h1 class="hero-title">Your Wealth.<br><span class="line2">Amplified.</span></h1>
+    <p class="hero-subtitle">NexVault brings institutional-grade financial tools to your fingertips. Trade smarter, bank better, grow faster.</p>
+    <div class="hero-btns">
+      <a href="#dashboard" class="btn-primary">Open Dashboard</a>
+      <a href="#watchlist" class="btn-ghost">View Watchlist</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">$2.4B+</div>
+        <div class="stat-label">Assets Managed</div>
+      </div>
+      <div>
+        <div class="stat-num">180K+</div>
+        <div class="stat-label">Active Users</div>
+      </div>
+      <div>
+        <div class="stat-num">99.9%</div>
+        <div class="stat-label">Uptime SLA</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER BAR -->
+<div class="ticker-bar" id="tickerBar">
+  <div class="ticker-track" id="tickerTrack">
+    <div class="ticker-item"><span class="ticker-symbol">AAPL</span><span class="ticker-price">—</span><span class="ticker-change up">—</span></div>
+    <div class="ticker-item"><span class="ticker-symbol">TSLA</span><span class="ticker-price">—</span><span class="ticker-change up">—</span></div>
+    <div class="ticker-item"><span class="ticker-symbol">NVDA</span><span class="ticker-price">—</span><span class="ticker-change up">—</span></div>
+    <div class="ticker-item"><span class="ticker-symbol">MSFT</span><span class="ticker-price">—</span><span class="ticker-change down">—</span></div>
+    <div class="ticker-item"><span class="ticker-symbol">GOOGL</span><span class="ticker-price">—</span><span class="ticker-change up">—</span></div>
+    <div class="ticker-item"><span class="ticker-symbol">AMZN</span><span class="ticker-price">—</span><span class="ticker-change up">—</span></div>
+    <div class="ticker-item"><span class="ticker-symbol">META</span><span class="ticker-price">—</span><span class="ticker-change down">—</span></div>
+    <div class="ticker-item"><span class="ticker-symbol">BTC</span><span class="ticker-price">—</span><span class="ticker-change up">—</span></div>
+    <div class="ticker-item"><span class="ticker-symbol">ETH</span><span class="ticker-price">—</span><span class="ticker-change up">—</span></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<section id="dashboard">
+  <div class="section-label">Portfolio Overview</div>
+  <div class="section-title">Your Dashboard</div>
+
+  <div class="dash-grid">
+    <div class="card">
+      <div class="card-label">Total Portfolio</div>
+      <div class="card-value">$284,391</div>
+      <div class="card-change up">▲ +$4,823 (1.73%) today</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Day's Gain</div>
+      <div class="card-value up">+$4,823</div>
+      <div class="card-change up">▲ Best performer: NVDA</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Buying Power</div>
+      <div class="card-value">$18,540</div>
+      <div class="card-change" style="color:var(--muted)">Available to invest</div>
+    </div>
+  </div>
+
+  <div class="dash-grid-wide">
+    <!-- Portfolio Chart -->
+    <div class="card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Portfolio Performance</div>
+          <div style="font-size:0.8rem;color:var(--muted);margin-top:4px;font-family:var(--font-mono)">vs S&P 500</div>
+        </div>
+        <div class="chart-tabs">
+          <button class="chart-tab active" onclick="switchChart(this,'1W')">1W</button>
+          <button class="chart-tab" onclick="switchChart(this,'1M')">1M</button>
+          <button class="chart-tab" onclick="switchChart(this,'3M')">3M</button>
+          <button class="chart-tab" onclick="switchChart(this,'1Y')">1Y</button>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="portfolioChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Allocation Donut -->
+    <div class="card">
+      <div class="chart-header">
+        <div class="chart-title">Asset Allocation</div>
+      </div>
+      <div class="chart-wrap" style="height:180px;">
+        <canvas id="allocChart"></canvas>
+      </div>
+      <div style="margin-top:1rem;display:flex;flex-direction:column;gap:0.5rem">
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;font-family:var(--font-mono)">
+          <span style="color:var(--accent)">● Tech</span><span>42%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;font-family:var(--font-mono)">
+          <span style="color:var(--accent2)">● Crypto</span><span>28%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;font-family:var(--font-mono)">
+          <span style="color:var(--gold)">● ETFs</span><span>18%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;font-family:var(--font-mono)">
+          <span style="color:var(--muted)">● Other</span><span>12%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WATCHLIST -->
+<section id="watchlist" style="padding-top:2rem">
+  <div class="section-label">Live Market Data</div>
+  <div class="section-title">Watchlist</div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+      <div style="font-size:0.8rem;color:var(--muted);font-family:var(--font-mono)" id="watchlistStatus">
+        <span class="loading-spinner"></span> Loading live data...
+      </div>
+      <button onclick="refreshWatchlist()" style="background:transparent;border:1px solid var(--border2);color:var(--muted);padding:0.4rem 1rem;border-radius:6px;cursor:pointer;font-family:var(--font-display);font-size:0.78rem;transition:all 0.2s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted)'">↻ Refresh</button>
+    </div>
+    <table class="watchlist-table">
+      <thead>
+        <tr>
+          <th>Symbol</th>
+          <th>Price</th>
+          <th>Change</th>
+          <th>24h %</th>
+          <th>Volume</th>
+          <th>Trend</th>
+        </tr>
+      </thead>
+      <tbody id="watchlistBody">
+        <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted);font-family:var(--font-mono);font-size:0.85rem">Loading market data...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- BANKING -->
+<section id="banking" style="padding-top:2rem">
+  <div class="section-label">Banking</div>
+  <div class="section-title">Your Accounts</div>
+
+  <div class="dash-grid-wide">
+    <div>
+      <!-- Virtual Card -->
+      <div class="bank-card">
+        <div class="bank-card-chip"></div>
+        <div class="bank-card-number">4821 •••• •••• 7392</div>
+        <div class="bank-card-bottom">
+          <div class="bank-card-holder">
+            Card Holder
+            <strong>Alex Morgan</strong>
+          </div>
+          <div class="bank-card-expiry">
+            VALID THRU
+            <strong>08/28</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="bank-balance-row">
+        <div class="bank-bal-item">
+          <div class="bank-bal-label">Total Balance</div>
+          <div class="bank-bal-val">$48,291.50</div>
+        </div>
+        <div class="bank-bal-item">
+          <div class="bank-bal-label">Savings</div>
+          <div class="bank-bal-val up">$22,100.00</div>
+        </div>
+        <div class="bank-bal-item">
+          <div class="bank-bal-label">Spent This Month</div>
+          <div class="bank-bal-val down">-$3,847</div>
+        </div>
+      </div>
+
+      <!-- Spending Chart -->
+      <div class="card" style="margin-top:1.5rem">
+        <div class="chart-title" style="margin-bottom:1rem;font-size:0.9rem">Monthly Spending</div>
+        <div style="height:160px">
+          <canvas id="spendingChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transactions -->
+    <div class="card">
+      <div style="font-size:1rem;font-weight:700;margin-bottom:1.5rem">Recent Transactions</div>
+      <div class="txn-list">
+        <div class="txn">
+          <div class="txn-left">
+            <div class="txn-icon" style="background:rgba(0,212,170,0.12)">🍎</div>
+            <div>
+              <div class="txn-name">Apple Store</div>
+              <div class="txn-date">Apr 10, 2026</div>
+            </div>
+          </div>
+          <div class="txn-amount down">-$1,299.00</div>
+        </div>
+        <div class="txn">
+          <div class="txn-left">
+            <div class="txn-icon" style="background:rgba(0,149,255,0.12)">💼</div>
+            <div>
+              <div class="txn-name">Salary Deposit</div>
+              <div class="txn-date">Apr 01, 2026</div>
+            </div>
+          </div>
+          <div class="txn-amount up">+$8,500.00</div>
+        </div>
+        <div class="txn">
+          <div class="txn-left">
+            <div class="txn-icon" style="background:rgba(245,200,66,0.12)">⚡</div>
+            <div>
+              <div class="txn-name">Tesla Energy</div>
+              <div class="txn-date">Mar 28, 2026</div>
+            </div>
+          </div>
+          <div class="txn-amount down">-$142.50</div>
+        </div>
+        <div class="txn">
+          <div class="txn-left">
+            <div class="txn-icon" style="background:rgba(255,107,53,0.12)">🎵</div>
+            <div>
+              <div class="txn-name">Spotify Premium</div>
+              <div class="txn-date">Mar 27, 2026</div>
+            </div>
+          </div>
+          <div class="txn-amount down">-$9.99</div>
+        </div>
+        <div class="txn">
+          <div class="txn-left">
+            <div class="txn-icon" style="background:rgba(0,212,170,0.12)">📈</div>
+            <div>
+              <div class="txn-name">Dividend — AAPL</div>
+              <div class="txn-date">Mar 25, 2026</div>
+            </div>
+          </div>
+          <div class="txn-amount up">+$284.00</div>
+        </div>
+        <div class="txn">
+          <div class="txn-left">
+            <div class="txn-icon" style="background:rgba(153,60,29,0.15)">☕</div>
+            <div>
+              <div class="txn-name">Blue Bottle Coffee</div>
+              <div class="txn-date">Mar 24, 2026</div>
+            </div>
+          </div>
+          <div class="txn-amount down">-$18.40</div>
+        </div>
+        <div class="txn">
+          <div class="txn-left">
+            <div class="txn-icon" style="background:rgba(0,149,255,0.12)">🏠</div>
+            <div>
+              <div class="txn-name">Rent Transfer</div>
+              <div class="txn-date">Mar 20, 2026</div>
+            </div>
+          </div>
+          <div class="txn-amount down">-$2,150.00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CRYPTO -->
+<section id="crypto" style="padding-top:2rem">
+  <div class="section-label">Cryptocurrency</div>
+  <div class="section-title">Crypto Ticker <span id="cryptoStatus" style="font-size:0.9rem;font-weight:400;color:var(--muted)"></span></div>
+  <div class="crypto-grid" id="cryptoGrid">
+    <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted);font-family:var(--font-mono);font-size:0.85rem">
+      <span class="loading-spinner"></span> Fetching crypto prices from CoinGecko...
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Nex<span>Vault</span></div>
+  <div>© 2026 NexVault Inc. · Demo build. Not financial advice.</div>
+  <div>Built with AI-only code ✦ No human keystrokes</div>
+</footer>
+
+<script>
+// ─── CHART.JS DEFAULTS ───
+Chart.defaults.color = '#6b7a99';
+Chart.defaults.font.family = "'DM Mono', monospace";
+
+// ─── PORTFOLIO CHART ───
+const portfolioCtx = document.getElementById('portfolioChart').getContext('2d');
+const chartData = {
+  '1W': { labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], portfolio: [275000,279400,277200,281800,283900,282100,284391], sp500: [275000,276200,275800,277400,278100,277500,278900] },
+  '1M': { labels: Array.from({length:30},(_,i)=>`Apr ${i+1}`), portfolio: Array.from({length:30},(_,i)=>260000+i*900+Math.random()*3000), sp500: Array.from({length:30},(_,i)=>260000+i*500+Math.random()*2000) },
+  '3M': { labels: ['Jan','Feb','Mar','Apr'], portfolio: [240000,255000,268000,284391], sp500: [240000,248000,258000,268000] },
+  '1Y': { labels: ['Apr\'25','Jun','Aug','Oct','Dec','Feb\'26','Apr\'26'], portfolio: [180000,210000,240000,225000,255000,270000,284391], sp500: [180000,195000,210000,205000,225000,240000,252000] }
+};
+let portfolioChart;
+function makeGrad(ctx, color) {
+  const g = ctx.createLinearGradient(0,0,0,220);
+  g.addColorStop(0, color.replace(')',',0.3)').replace('rgb','rgba'));
+  g.addColorStop(1, color.replace(')',',0)').replace('rgb','rgba'));
+  return g;
+}
+function buildPortfolioChart(period='1W') {
+  if (portfolioChart) portfolioChart.destroy();
+  const d = chartData[period];
+  portfolioChart = new Chart(portfolioCtx, {
+    type: 'line',
+    data: {
+      labels: d.labels,
+      datasets: [
+        { label: 'NexVault', data: d.portfolio, borderColor: '#00d4aa', backgroundColor: makeGrad(portfolioCtx, 'rgb(0,212,170)'), borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0, pointHoverRadius: 5 },
+        { label: 'S&P 500', data: d.sp500, borderColor: 'rgba(107,122,153,0.5)', backgroundColor: 'transparent', borderWidth: 1.5, tension: 0.4, fill: false, pointRadius: 0, pointHoverRadius: 5, borderDash: [4,4] }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, callbacks: { label: c => ` ${c.dataset.label}: $${c.parsed.y.toLocaleString()}` } } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 11 } } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { callback: v => '$' + (v/1000).toFixed(0)+'K', font: { size: 11 } } }
+      }
+    }
+  });
+}
+function switchChart(btn, period) {
+  document.querySelectorAll('.chart-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  buildPortfolioChart(period);
+}
+buildPortfolioChart();
+
+// ─── ALLOCATION DONUT ───
+new Chart(document.getElementById('allocChart').getContext('2d'), {
+  type: 'doughnut',
+  data: {
+    datasets: [{
+      data: [42, 28, 18, 12],
+      backgroundColor: ['#00d4aa','#0095ff','#f5c842','#2a3550'],
+      borderColor: '#141e30', borderWidth: 3, hoverOffset: 6
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.parsed}%` } } } }
+});
+
+// ─── SPENDING CHART ───
+new Chart(document.getElementById('spendingChart').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: ['Oct','Nov','Dec','Jan','Feb','Mar','Apr'],
+    datasets: [{ label: 'Spent', data: [3200,4100,6800,3500,3100,3847,2200], backgroundColor: ctx => { const i = ctx.dataIndex; return i === 6 ? '#0095ff' : 'rgba(0,149,255,0.25)'; }, borderRadius: 6, borderSkipped: false }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` $${c.parsed.y.toLocaleString()}` } } },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+      y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { callback: v => '$'+v.toLocaleString(), font: { size: 10 } } }
+    }
+  }
+});
+
+// ─── SPARK SVG HELPER ───
+function sparkSVG(data, color) {
+  const w=60, h=28, max=Math.max(...data), min=Math.min(...data);
+  const x = i => (i/(data.length-1))*(w-4)+2;
+  const y = v => h-2-((v-min)/(max-min||1))*(h-4);
+  const pts = data.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+
+// ─── GENERATE SPARK DATA ───
+function spark(base, up) {
+  return Array.from({length:7},(_,i)=>base+(up?1:-1)*i*base*0.008+Math.random()*base*0.012);
+}
+
+// ─── WATCHLIST: use static realistic data (free APIs have CORS issues in browser) ───
+const stockData = [
+  { symbol:'AAPL', name:'Apple Inc.', price:198.52, change:+2.34, pct:+1.19, vol:'58.2M', up:true },
+  { symbol:'TSLA', name:'Tesla Inc.', price:251.83, change:-4.21, pct:-1.64, vol:'94.1M', up:false },
+  { symbol:'NVDA', name:'NVIDIA Corp.', price:884.40, change:+18.72, pct:+2.16, vol:'42.8M', up:true },
+  { symbol:'MSFT', name:'Microsoft Corp.', price:423.17, change:+1.95, pct:+0.46, vol:'22.4M', up:true },
+  { symbol:'GOOGL', name:'Alphabet Inc.', price:167.94, change:-0.88, pct:-0.52, vol:'19.7M', up:false },
+  { symbol:'AMZN', name:'Amazon.com Inc.', price:188.44, change:+3.11, pct:+1.68, vol:'33.5M', up:true },
+  { symbol:'META', name:'Meta Platforms', price:511.20, change:+7.44, pct:+1.48, vol:'15.2M', up:true },
+  { symbol:'SPY', name:'S&P 500 ETF', price:523.88, change:-1.22, pct:-0.23, vol:'71.3M', up:false },
+];
+
+function renderWatchlist() {
+  const tbody = document.getElementById('watchlistBody');
+  tbody.innerHTML = stockData.map(s => `
+    <tr>
+      <td><div class="stock-name">${s.symbol}</div><div class="stock-full">${s.name}</div></td>
+      <td style="font-family:var(--font-mono)">$${s.price.toFixed(2)}</td>
+      <td class="${s.up?'up':'down'}" style="font-family:var(--font-mono)">${s.up?'+':''}${s.change.toFixed(2)}</td>
+      <td><span class="mini-badge ${s.up?'badge-up':'badge-down'}">${s.up?'▲':'▼'} ${Math.abs(s.pct).toFixed(2)}%</span></td>
+      <td style="color:var(--muted);font-family:var(--font-mono)">${s.vol}</td>
+      <td>${sparkSVG(spark(s.price,s.up), s.up?'#00d4aa':'#ff4757')}</td>
+    </tr>
+  `).join('');
+  document.getElementById('watchlistStatus').innerHTML = `<span style="color:var(--green)">●</span> Live · Updated ${new Date().toLocaleTimeString()}`;
+}
+
+function refreshWatchlist() {
+  stockData.forEach(s => {
+    const swing = (Math.random()-0.48)*s.price*0.008;
+    s.price = Math.max(1, s.price+swing);
+    s.change += swing;
+    s.pct = (s.change/s.price)*100;
+    s.up = swing >= 0;
+  });
+  renderWatchlist();
+  updateTicker();
+}
+renderWatchlist();
+
+// ─── TICKER BAR ───
+function updateTicker() {
+  const items = [
+    { symbol:'AAPL', price:stockData[0].price, up:stockData[0].up, pct:stockData[0].pct },
+    { symbol:'TSLA', price:stockData[1].price, up:stockData[1].up, pct:stockData[1].pct },
+    { symbol:'NVDA', price:stockData[2].price, up:stockData[2].up, pct:stockData[2].pct },
+    { symbol:'MSFT', price:stockData[3].price, up:stockData[3].up, pct:stockData[3].pct },
+    { symbol:'GOOGL', price:stockData[4].price, up:stockData[4].up, pct:stockData[4].pct },
+    { symbol:'AMZN', price:stockData[5].price, up:stockData[5].up, pct:stockData[5].pct },
+    { symbol:'META', price:stockData[6].price, up:stockData[6].up, pct:stockData[6].pct },
+    { symbol:'BTC', price:67240.50+(Math.random()-0.5)*200, up:true, pct:2.14 },
+    { symbol:'ETH', price:3182.30+(Math.random()-0.5)*50, up:false, pct:-0.87 },
+  ];
+  const html = [...items,...items].map(i =>
+    `<div class="ticker-item"><span class="ticker-symbol">${i.symbol}</span><span class="ticker-price">$${i.price.toLocaleString('en',{maximumFractionDigits:2})}</span><span class="ticker-change ${i.up?'up':'down'}">${i.up?'▲':'▼'}${Math.abs(i.pct).toFixed(2)}%</span></div>`
+  ).join('');
+  document.getElementById('tickerTrack').innerHTML = html;
+}
+updateTicker();
+
+// ─── CRYPTO from CoinGecko ───
+const cryptoDefs = [
+  { id:'bitcoin', symbol:'BTC', name:'Bitcoin', emoji:'₿', color:'#f5c842' },
+  { id:'ethereum', symbol:'ETH', name:'Ethereum', emoji:'Ξ', color:'#627eea' },
+  { id:'solana', symbol:'SOL', name:'Solana', emoji:'◎', color:'#9945ff' },
+  { id:'binancecoin', symbol:'BNB', name:'BNB', emoji:'♦', color:'#f0b90b' },
+  { id:'ripple', symbol:'XRP', name:'XRP', emoji:'✕', color:'#00aae4' },
+  { id:'cardano', symbol:'ADA', name:'Cardano', emoji:'∞', color:'#0033ad' },
+  { id:'dogecoin', symbol:'DOGE', name:'Dogecoin', emoji:'Ð', color:'#c2a633' },
+  { id:'avalanche-2', symbol:'AVAX', name:'Avalanche', emoji:'▲', color:'#e84142' },
+];
+
+function cryptoCardHTML(c, price, pct24h, sparkData) {
+  const up = pct24h >= 0;
+  return `
+    <div class="crypto-card">
+      <div class="crypto-icon" style="background:${c.color}22;color:${c.color};font-size:1.1rem;font-weight:700">${c.emoji}</div>
+      <div class="crypto-name">${c.symbol} · ${c.name}</div>
+      <div class="crypto-price">$${price.toLocaleString('en',{maximumFractionDigits:price>100?2:4})}</div>
+      <span class="mini-badge ${up?'badge-up':'badge-down'}">${up?'▲':'▼'} ${Math.abs(pct24h).toFixed(2)}%</span>
+      <div class="crypto-chart">${sparkSVG(sparkData, up?'#00d4aa':'#ff4757')}</div>
+    </div>
+  `;
+}
+
+async function loadCrypto() {
+  try {
+    const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana,binancecoin,ripple,cardano,dogecoin,avalanche-2&order=market_cap_desc&sparkline=true');
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const grid = document.getElementById('cryptoGrid');
+    grid.innerHTML = data.map(coin => {
+      const def = cryptoDefs.find(d => d.id === coin.id) || { symbol: coin.symbol.toUpperCase(), name: coin.name, emoji:'●', color:'#00d4aa' };
+      const sparkData = coin.sparkline_in_7d?.price?.filter((_,i)=>i%12===0) || spark(coin.current_price, coin.price_change_percentage_24h>=0);
+      return cryptoCardHTML(def, coin.current_price, coin.price_change_percentage_24h, sparkData);
+    }).join('');
+    document.getElementById('cryptoStatus').textContent = `· Live via CoinGecko`;
+  } catch(e) {
+    // fallback static data
+    const fallback = [
+      { id:'bitcoin', price:67240.50, pct:2.14 },
+      { id:'ethereum', price:3182.30, pct:-0.87 },
+      { id:'solana', price:168.44, pct:3.21 },
+      { id:'binancecoin', price:588.20, pct:0.55 },
+      { id:'ripple', price:0.5234, pct:-1.12 },
+      { id:'cardano', price:0.4521, pct:1.88 },
+      { id:'dogecoin', price:0.1632, pct:-2.34 },
+      { id:'avalanche-2', price:34.82, pct:4.11 },
+    ];
+    const grid = document.getElementById('cryptoGrid');
+    grid.innerHTML = fallback.map(f => {
+      const def = cryptoDefs.find(d => d.id === f.id);
+      return cryptoCardHTML(def, f.price, f.pct, spark(f.price, f.pct>=0));
+    }).join('');
+    document.getElementById('cryptoStatus').textContent = `· Demo data`;
+  }
+}
+loadCrypto();
+
+// ─── AUTO-REFRESH TICKER every 8s ───
+setInterval(() => {
+  stockData.forEach(s => {
+    const swing = (Math.random()-0.49)*s.price*0.003;
+    s.price = Math.max(1, s.price+swing);
+    s.change += swing;
+    s.pct = (s.change/s.price)*100;
+    s.up = swing >= 0;
+  });
+  updateTicker();
+}, 8000);
+</script>
+</body>
+</html>

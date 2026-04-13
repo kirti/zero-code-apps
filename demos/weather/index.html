@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lume — Weather Intelligence</title>
+  
+  <!-- Google Fonts: Syne (display) + DM Mono (mono) -->
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg:       #080c12;
+      --bg2:      #0d1420;
+      --surface:  #141e30;
+      --surface2: #1a2640;
+      --border:   rgba(255,255,255,0.06);
+      --border2:  rgba(255,255,255,0.12);
+      --text:     #e8edf5;
+      --muted:    #6b7a99;
+      --accent:   #00d4aa;
+      --accent2:  #0095ff;
+      --yellow:   #f5c842;
+      --orange:   #ff8c42;
+      --red:      #ff4757;
+    }
+
+    body {
+      font-family: 'DM Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Background atmosphere */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -20%;
+      right: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0,212,170,0.12) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -15%;
+      left: -10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(0,149,255,0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Grid overlay */
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      background: rgba(8,12,18,0.85);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+    }
+
+    .location-selector {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .location-selector:hover {
+      border-color: var(--border2);
+    }
+
+    /* Main Container */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 6rem 2rem 3rem;
+    }
+
+    /* Hero Section */
+    .hero {
+      margin-bottom: 3rem;
+      animation: fadeUp 0.8s ease both;
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 2rem;
+    }
+
+    .current-temp {
+      font-family: 'Syne', sans-serif;
+      font-size: 7rem;
+      font-weight: 800;
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+      background: linear-gradient(135deg, var(--text) 0%, var(--muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .current-info {
+      text-align: right;
+    }
+
+    .condition {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .feels-like {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .weather-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border2);
+      transform: translateY(-2px);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
+
+    .stat-trend {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 0.25rem;
+    }
+
+    .trend-up { color: var(--red); }
+    .trend-down { color: var(--accent); }
+
+    /* Dashboard Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Card Component */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: border-color 0.2s;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .card:nth-child(1) { animation-delay: 0.1s; }
+    .card:nth-child(2) { animation-delay: 0.2s; }
+    .card:nth-child(3) { animation-delay: 0.3s; }
+
+    .card:hover {
+      border-color: var(--border2);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .card-tabs {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .tab {
+      padding: 0.35rem 0.85rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      border-color: var(--border2);
+      color: var(--text);
+    }
+
+    .tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg);
+    }
+
+    /* Chart Container */
+    .chart-container {
+      position: relative;
+      height: 280px;
+      margin-bottom: 1rem;
+    }
+
+    .chart-container.small {
+      height: 220px;
+    }
+
+    /* Forecast List */
+    .forecast-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .forecast-item {
+      display: grid;
+      grid-template-columns: 80px 1fr 60px;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      transition: border-color 0.2s;
+    }
+
+    .forecast-item:hover {
+      border-color: var(--border2);
+    }
+
+    .forecast-day {
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .forecast-condition {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .forecast-icon {
+      font-size: 1.5rem;
+    }
+
+    .forecast-temp {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    /* Bottom Grid */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    /* Air Quality Card */
+    .aqi-display {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .aqi-circle {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 6px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      position: relative;
+    }
+
+    .aqi-circle::before {
+      content: '';
+      position: absolute;
+      width: 120%;
+      height: 120%;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,212,170,0.15) 0%, transparent 70%);
+      z-index: -1;
+      animation: pulse 2s ease infinite;
+    }
+
+    .aqi-info {
+      flex: 1;
+    }
+
+    .aqi-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.25rem;
+    }
+
+    .aqi-desc {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .pollutant-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .pollutant {
+      padding: 0.75rem;
+      background: var(--bg2);
+      border-radius: 8px;
+    }
+
+    .pollutant-name {
+      color: var(--muted);
+      font-size: 0.7rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .pollutant-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    /* Hourly Forecast */
+    .hourly-scroll {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .hourly-scroll::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .hourly-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .hourly-scroll::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 10px;
+    }
+
+    .hourly-item {
+      min-width: 90px;
+      padding: 1rem;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      text-align: center;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .hourly-item:hover {
+      border-color: var(--border2);
+      transform: translateY(-2px);
+    }
+
+    .hourly-time {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .hourly-icon {
+      font-size: 2rem;
+      margin: 0.5rem 0;
+    }
+
+    .hourly-temp {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    /* Animations */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.6;
+        transform: scale(1.05);
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .bottom-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .weather-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .current-temp {
+        font-size: 4rem;
+      }
+
+      .hero-top {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .current-info {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="grid-overlay"></div>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-content">
+      <div class="logo">⚡ Lume</div>
+      <div class="nav-links">
+        <a href="#">Forecast</a>
+        <a href="#">Radar</a>
+        <a href="#">Alerts</a>
+        <div class="location-selector">
+          <span>📍</span>
+          <span>San Francisco, CA</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="container">
+    
+    <!-- Hero Section -->
+    <div class="hero">
+      <div class="hero-top">
+        <div class="current-temp">68°</div>
+        <div class="current-info">
+          <div class="condition">Partly Cloudy</div>
+          <div class="feels-like">Feels like 65° · Updated 2 min ago</div>
+        </div>
+      </div>
+
+      <div class="weather-stats">
+        <div class="stat-card">
+          <div class="stat-label">Wind</div>
+          <div class="stat-value">12 mph</div>
+          <div class="stat-trend trend-up">↑ 3 mph</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Humidity</div>
+          <div class="stat-value">62%</div>
+          <div class="stat-trend trend-down">↓ 5%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Pressure</div>
+          <div class="stat-value">30.12</div>
+          <div class="stat-trend">in Hg</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">UV Index</div>
+          <div class="stat-value">6</div>
+          <div class="stat-trend">Moderate</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard Grid -->
+    <div class="dashboard-grid">
+      
+      <!-- Temperature Chart -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Temperature Forecast</div>
+          <div class="card-tabs">
+            <button class="tab active" onclick="switchPeriod(this, '24H')">24H</button>
+            <button class="tab" onclick="switchPeriod(this, '7D')">7D</button>
+            <button class="tab" onclick="switchPeriod(this, '14D')">14D</button>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="tempChart"></canvas>
+        </div>
+      </div>
+
+      <!-- 7-Day Forecast -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">7-Day Forecast</div>
+        </div>
+        <div class="forecast-list">
+          <div class="forecast-item">
+            <div class="forecast-day">Today</div>
+            <div class="forecast-condition">
+              <span class="forecast-icon">⛅</span>
+              <span>Partly Cloudy</span>
+            </div>
+            <div class="forecast-temp">72°</div>
+          </div>
+          <div class="forecast-item">
+            <div class="forecast-day">Tomorrow</div>
+            <div class="forecast-condition">
+              <span class="forecast-icon">☀️</span>
+              <span>Sunny</span>
+            </div>
+            <div class="forecast-temp">75°</div>
+          </div>
+          <div class="forecast-item">
+            <div class="forecast-day">Wednesday</div>
+            <div class="forecast-condition">
+              <span class="forecast-icon">☁️</span>
+              <span>Cloudy</span>
+            </div>
+            <div class="forecast-temp">70°</div>
+          </div>
+          <div class="forecast-item">
+            <div class="forecast-day">Thursday</div>
+            <div class="forecast-condition">
+              <span class="forecast-icon">🌧️</span>
+              <span>Light Rain</span>
+            </div>
+            <div class="forecast-temp">66°</div>
+          </div>
+          <div class="forecast-item">
+            <div class="forecast-day">Friday</div>
+            <div class="forecast-condition">
+              <span class="forecast-icon">⛈️</span>
+              <span>Thunderstorms</span>
+            </div>
+            <div class="forecast-temp">64°</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Grid -->
+    <div class="bottom-grid">
+      
+      <!-- Precipitation Chart -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Precipitation</div>
+        </div>
+        <div class="chart-container small">
+          <canvas id="precipChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Air Quality -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Air Quality</div>
+        </div>
+        <div class="aqi-display">
+          <div class="aqi-circle">42</div>
+          <div class="aqi-info">
+            <div class="aqi-label">Good</div>
+            <div class="aqi-desc">Air quality is satisfactory</div>
+          </div>
+        </div>
+        <div class="pollutant-grid">
+          <div class="pollutant">
+            <div class="pollutant-name">PM2.5</div>
+            <div class="pollutant-value">12 μg/m³</div>
+          </div>
+          <div class="pollutant">
+            <div class="pollutant-name">PM10</div>
+            <div class="pollutant-value">24 μg/m³</div>
+          </div>
+          <div class="pollutant">
+            <div class="pollutant-name">O₃</div>
+            <div class="pollutant-value">38 ppb</div>
+          </div>
+          <div class="pollutant">
+            <div class="pollutant-name">NO₂</div>
+            <div class="pollutant-value">18 ppb</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hourly Forecast -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Hourly Forecast</div>
+        </div>
+        <div class="hourly-scroll">
+          <div class="hourly-item">
+            <div class="hourly-time">Now</div>
+            <div class="hourly-icon">⛅</div>
+            <div class="hourly-temp">68°</div>
+          </div>
+          <div class="hourly-item">
+            <div class="hourly-time">2 PM</div>
+            <div class="hourly-icon">☀️</div>
+            <div class="hourly-temp">70°</div>
+          </div>
+          <div class="hourly-item">
+            <div class="hourly-time">3 PM</div>
+            <div class="hourly-icon">☀️</div>
+            <div class="hourly-temp">72°</div>
+          </div>
+          <div class="hourly-item">
+            <div class="hourly-time">4 PM</div>
+            <div class="hourly-icon">☀️</div>
+            <div class="hourly-temp">73°</div>
+          </div>
+          <div class="hourly-item">
+            <div class="hourly-time">5 PM</div>
+            <div class="hourly-icon">⛅</div>
+            <div class="hourly-temp">71°</div>
+          </div>
+          <div class="hourly-item">
+            <div class="hourly-time">6 PM</div>
+            <div class="hourly-icon">☁️</div>
+            <div class="hourly-temp">69°</div>
+          </div>
+          <div class="hourly-item">
+            <div class="hourly-time">7 PM</div>
+            <div class="hourly-icon">☁️</div>
+            <div class="hourly-temp">66°</div>
+          </div>
+          <div class="hourly-item">
+            <div class="hourly-time">8 PM</div>
+            <div class="hourly-icon">🌙</div>
+            <div class="hourly-temp">64°</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // Chart.js Global Defaults
+    Chart.defaults.color = '#6b7a99';
+    Chart.defaults.font.family = "'DM Mono', monospace";
+
+    // Gradient helper
+    function makeGradient(ctx, colorRGB) {
+      const g = ctx.createLinearGradient(0, 0, 0, 280);
+      g.addColorStop(0, `rgba(${colorRGB}, 0.3)`);
+      g.addColorStop(1, `rgba(${colorRGB}, 0)`);
+      return g;
+    }
+
+    // Temperature Chart Data
+    const tempData = {
+      '24H': {
+        labels: ['12 AM', '3 AM', '6 AM', '9 AM', '12 PM', '3 PM', '6 PM', '9 PM'],
+        actual: [58, 56, 55, 60, 65, 70, 68, 62],
+        feels: [56, 54, 53, 58, 63, 68, 66, 60]
+      },
+      '7D': {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        actual: [68, 72, 70, 66, 64, 69, 73],
+        feels: [65, 70, 68, 64, 62, 67, 71]
+      },
+      '14D': {
+        labels: ['Week 1', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Week 2', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+        actual: [65, 68, 72, 70, 66, 64, 69, 73, 71, 68, 70, 74, 72, 70],
+        feels: [63, 65, 70, 68, 64, 62, 67, 71, 69, 66, 68, 72, 70, 68]
+      }
+    };
+
+    let tempChart;
+
+    function buildTempChart(period = '24H') {
+      const ctx = document.getElementById('tempChart').getContext('2d');
+      if (tempChart) tempChart.destroy();
+
+      const data = tempData[period];
+
+      tempChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.labels,
+          datasets: [
+            {
+              label: 'Actual',
+              data: data.actual,
+              borderColor: '#00d4aa',
+              backgroundColor: makeGradient(ctx, '0,212,170'),
+              borderWidth: 2.5,
+              tension: 0.4,
+              fill: true,
+              pointRadius: 0,
+              pointHoverRadius: 6,
+              pointHoverBackgroundColor: '#00d4aa',
+              pointHoverBorderColor: '#080c12',
+              pointHoverBorderWidth: 2
+            },
+            {
+              label: 'Feels Like',
+              data: data.feels,
+              borderColor: 'rgba(107,122,153,0.6)',
+              backgroundColor: 'transparent',
+              borderWidth: 2,
+              tension: 0.4,
+              fill: false,
+              pointRadius: 0,
+              pointHoverRadius: 6,
+              borderDash: [5, 5]
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              backgroundColor: '#1a2640',
+              borderColor: 'rgba(255,255,255,0.12)',
+              borderWidth: 1,
+              padding: 12,
+              titleColor: '#e8edf5',
+              bodyColor: '#6b7a99',
+              callbacks: {
+                label: c => ` ${c.dataset.label}: ${c.parsed.y}°F`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              border: { display: false }
+            },
+            y: {
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              border: { display: false },
+              ticks: {
+                callback: v => v + '°'
+              }
+            }
+          },
+          interaction: {
+            mode: 'nearest',
+            axis: 'x',
+            intersect: false
+          }
+        }
+      });
+    }
+
+    function switchPeriod(btn, period) {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      buildTempChart(period);
+    }
+
+    // Precipitation Bar Chart
+    function buildPrecipChart() {
+      const ctx = document.getElementById('precipChart').getContext('2d');
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          datasets: [{
+            label: 'Precipitation',
+            data: [0.2, 0, 0.1, 0.8, 1.2, 0.3, 0],
+            backgroundColor: ctx => {
+              const value = ctx.parsed.y;
+              if (value > 0.8) return '#0095ff';
+              if (value > 0.3) return 'rgba(0,149,255,0.5)';
+              return 'rgba(0,149,255,0.2)';
+            },
+            borderRadius: 6,
+            borderSkipped: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1a2640',
+              borderColor: 'rgba(255,255,255,0.12)',
+              borderWidth: 1,
+              padding: 12,
+              callbacks: {
+                label: c => ` ${c.parsed.y} inches`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              border: { display: false }
+            },
+            y: {
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              border: { display: false },
+              ticks: {
+                callback: v => v + '"'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Initialize charts
+    buildTempChart();
+    buildPrecipChart();
+  </script>
+
+</body>
+</html>
