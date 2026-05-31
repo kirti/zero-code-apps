@@ -7,7 +7,7 @@
 [![powered by skillforge-ai](https://img.shields.io/badge/powered%20by-skillforge--ai-00d4aa?style=flat-square)](https://www.npmjs.com/package/skillforge-ai)
 [![license](https://img.shields.io/badge/license-MIT-64748b?style=flat-square)](LICENSE)
 
----
+----
 
 ## Live demos
 
