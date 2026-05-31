@@ -14,10 +14,14 @@
 | Page | URL | What it does |
 |------|-----|--------------|
 | **Homepage** | [kirti.github.io/zero-code-apps](https://kirti.github.io/zero-code-apps) | Platform entry point |
-| **AI App Builder** | [kirti.github.io/zero-code-apps/builder](https://kirti.github.io/zero-code-apps/builder) | Describe a fintech app → streams live code via Claude / GPT-4o / Gemini |
+| **AI App Builder** | [kirti.github.io/zero-code-apps/builder](https://kirti.github.io/zero-code-apps/builder) | 10 templates · Claude/GPT-4o/Gemini streaming · skills inspector · cost transparency |
 | **Cozy Generator** | [kirti.github.io/zero-code-apps/cozy](https://kirti.github.io/zero-code-apps/cozy) | Describe a vibe → AI image via DALL·E 3 or Stable Diffusion |
+| **skillforge-ai** | [kirti.github.io/zero-code-apps/skillforge](https://kirti.github.io/zero-code-apps/skillforge) | npm package showcase · skill explorer · CLI demo · services |
 | **NexVault demo** | [kirti.github.io/zero-code-apps/demos/nexvault](https://kirti.github.io/zero-code-apps/demos/nexvault/) | Dark fintech trading dashboard — CoinGecko live data |
 | **Pulse Analytics** | [kirti.github.io/zero-code-apps/demos/pulse-analytics](https://kirti.github.io/zero-code-apps/demos/pulse-analytics/) | SaaS analytics dashboard |
+| **Crypto Trading** | [kirti.github.io/zero-code-apps/demos/crypto-trading](https://kirti.github.io/zero-code-apps/demos/crypto-trading/) | BTC/ETH/SOL live prices · candlestick · portfolio |
+| **Wealth Management** | [kirti.github.io/zero-code-apps/demos/wealth-management](https://kirti.github.io/zero-code-apps/demos/wealth-management/) | Asset allocation · holdings · performance |
+| **Banking** | [kirti.github.io/zero-code-apps/demos/banking](https://kirti.github.io/zero-code-apps/demos/banking/) | Accounts · transactions · spending · savings |
 
 ---
 
@@ -42,10 +46,12 @@ Download as standalone HTML — deploy anywhere for free
 ```bash
 git clone https://github.com/kirti/zero-code-apps
 cd zero-code-apps
-npm install
-npm run dev
-# → http://localhost:3000
+npm install                # installs skillforge-ai + serve
+npm run build:skills       # reads real skills from skillforge-ai → builder/skills.js
+npm run dev                # → http://localhost:3000
 ```
+
+> **Note:** `npm run build:skills` must be run after `npm install` to inject real skill content into the builder. Without it the builder loads but skills panel shows empty.
 
 ---
 
@@ -105,13 +111,24 @@ Push to GitHub → auto-deploys to GitHub Pages.
 zero-code-apps/
 ├── index.html              ← platform homepage
 ├── builder/
-│   └── index.html          ← AI fintech app builder (streaming)
+│   ├── index.html          ← AI app builder v2 (10 templates, streaming, transparency)
+│   └── skills.js           ← auto-generated from skillforge-ai (run npm run build:skills)
 ├── cozy/
 │   └── index.html          ← cozy image generator
+├── skillforge/
+│   └── index.html          ← skillforge-ai npm package showcase
+├── npm/index.html          ← redirects to /skillforge
+├── package/index.html      ← redirects to /skillforge
 ├── demos/
 │   ├── nexvault/           ← AI-generated fintech demo
 │   ├── pulse-analytics/    ← AI-generated analytics demo
-│   └── weather/            ← AI-generated weather demo
+│   ├── crypto-trading/     ← AI-generated crypto dashboard
+│   ├── wealth-management/  ← AI-generated wealth mgmt dashboard
+│   ├── banking/            ← AI-generated banking dashboard
+│   ├── saas-analytics/     ← AI-generated SaaS analytics
+│   └── order-flow/         ← AI-generated order flow visualiser
+├── scripts/
+│   └── build-skills.js     ← reads skills from skillforge-ai → writes builder/skills.js
 └── .github/workflows/
     └── deploy.yml          ← auto-deploy to GitHub Pages on push
 ```
