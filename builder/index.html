@@ -456,7 +456,7 @@ footer a{color:var(--accent);text-decoration:none;}
           </div>
           <div class="stream-pre" id="stream-pre"></div>
         </div>
-        <iframe id="preview" title="Generated app" style="display:none;width:100%;height:100%;border:none;"></iframe>
+        <iframe id="preview" title="Generated app" style="display:none;width:100%;height:100%;min-height:500px;border:none;position:absolute;inset:0;"></iframe>
         <div class="code-view" id="code-view">
           <pre id="code-pre">// Code will appear here after generation</pre>
         </div>
@@ -556,14 +556,45 @@ function renderGallery() {
 
 function previewTemplate(demoUrl, e) {
   e.stopPropagation();
+
+  // Switch to preview area
   showPreviewArea();
-  switchTab('preview');
-  const iframe = document.getElementById('preview');
-  iframe.style.display = 'block';
+
+  // Hide everything first
   document.getElementById('empty-state').style.display = 'none';
   document.getElementById('stream-view').classList.remove('show');
+  document.getElementById('code-view').style.display = 'none';
+  document.getElementById('compare-wrap').style.display = 'none';
+
+  // Show iframe and load demo
+  const iframe = document.getElementById('preview');
+  iframe.style.display = 'block';
+  iframe.style.width = '100%';
+  iframe.style.height = '100%';
+  iframe.style.border = 'none';
+
+  // Set src and handle load
+  iframe.onload = () => setStatus('Preview loaded — hit Generate to customise', 'done');
+  iframe.onerror = () => {
+    // Fallback: open in new tab if iframe blocked
+    iframe.style.display = 'none';
+    document.getElementById('empty-state').style.display = 'flex';
+    document.getElementById('empty-state').innerHTML = `
+      <div class="empty-icon">🔗</div>
+      <div class="empty-title">Preview in new tab</div>
+      <div class="empty-sub" style="margin-bottom:16px;">Click to open the demo</div>
+      <a href="${demoUrl}" target="_blank" style="font-family:'DM Mono',monospace;font-size:12px;padding:8px 20px;background:var(--accent);color:#000;border-radius:6px;text-decoration:none;">Open demo →</a>
+    `;
+  };
   iframe.src = demoUrl;
-  setStatus('Loaded predefined template', 'done');
+
+  // Switch to preview tab
+  ['preview','code','stream','compare'].forEach(t => {
+    document.getElementById('ptab-' + t)?.classList.remove('active');
+  });
+  document.getElementById('ptab-preview')?.classList.add('active');
+
+  setStatus('Loading preview...', 'active');
 }
 
 function selectTemplate(prompt, e) {
