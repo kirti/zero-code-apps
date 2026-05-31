@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sovereign Wealth · Portfolio Dashboard</title>
+
+<!-- Fonts: Syne (display) + DM Mono (mono) -->
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+:root {
+  --bg:       #080c12;
+  --bg2:      #0d1420;
+  --surface:  #141e30;
+  --surface2: #1a2640;
+  --border:   rgba(255,255,255,0.06);
+  --border2:  rgba(255,255,255,0.12);
+  --text:     #e8edf5;
+  --muted:    #6b7a99;
+  --accent:   #7c3aed;
+  --accent2:  #a78bfa;
+  --green:    #00d4aa;
+  --red:      #ff4757;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Mono', monospace;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* Background atmosphere */
+.bg-orb {
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+.orb-1 {
+  top: -200px;
+  right: -100px;
+  background: radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%);
+}
+.orb-2 {
+  bottom: -300px;
+  left: -200px;
+  background: radial-gradient(circle, rgba(0,212,170,0.06) 0%, transparent 70%);
+}
+
+/* Layout */
+.container {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+/* Sidebar */
+.sidebar {
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  padding: 2rem 0;
+  position: fixed;
+  width: 240px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  padding: 0 1.5rem;
+  margin-bottom: 3rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.nav-item {
+  padding: 0.85rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  border-left: 3px solid transparent;
+}
+
+.nav-item:hover {
+  color: var(--text);
+  background: rgba(124,58,237,0.05);
+}
+
+.nav-item.active {
+  color: var(--accent);
+  background: rgba(124,58,237,0.08);
+  border-left-color: var(--accent);
+}
+
+.nav-icon {
+  font-size: 1.2rem;
+  width: 20px;
+  text-align: center;
+}
+
+/* Main Content */
+.main {
+  margin-left: 240px;
+  padding: 2rem 3rem;
+}
+
+/* Header */
+.header {
+  margin-bottom: 3rem;
+  animation: fadeUp 0.6s ease both;
+}
+
+.greeting {
+  font-family: 'Syne', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.subhead {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* Stats Bar */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  animation: fadeUp 0.6s ease 0.1s both;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: border-color 0.2s;
+}
+
+.stat-card:hover {
+  border-color: var(--border2);
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.75rem;
+}
+
+.stat-value {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.stat-change {
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.stat-change.up { color: var(--green); }
+.stat-change.down { color: var(--red); }
+
+/* Grid Layout */
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Card */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  animation: fadeUp 0.6s ease 0.2s both;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* Period Tabs */
+.period-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tab {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab:hover {
+  border-color: var(--border2);
+  color: var(--text);
+}
+
+.tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+/* Chart Container */
+.chart-container {
+  height: 280px;
+  position: relative;
+}
+
+/* Allocation Legend */
+.allocation-legend {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.legend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.legend-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.legend-pct {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* Holdings Table */
+.holdings-table {
+  width: 100%;
+  border-collapse: collapse;
+  animation: fadeUp 0.6s ease 0.3s both;
+}
+
+.holdings-table th {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-align: left;
+  padding: 0 1rem 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  font-weight: 500;
+}
+
+.holdings-table td {
+  padding: 1rem;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.holdings-table tr:hover td {
+  background: rgba(255,255,255,0.02);
+}
+
+.symbol-cell {
+  font-weight: 600;
+  font-family: 'Syne', sans-serif;
+}
+
+.company-name {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+}
+
+.badge-up {
+  background: rgba(0,212,170,0.12);
+  color: var(--green);
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.badge-down {
+  background: rgba(255,71,87,0.12);
+  color: var(--red);
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+/* Risk Meter */
+.risk-meter {
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.risk-circle {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--accent) 0deg,
+    var(--accent2) 180deg,
+    rgba(124,58,237,0.2) 252deg,
+    rgba(255,255,255,0.05) 252deg
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.risk-circle::before {
+  content: '';
+  width: 110px;
+  height: 110px;
+  background: var(--surface);
+  border-radius: 50%;
+  position: absolute;
+}
+
+.risk-score {
+  font-family: 'Syne', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 800;
+  position: relative;
+  z-index: 1;
+}
+
+.risk-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Top Movers */
+.movers-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.mover-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  transition: border-color 0.2s;
+}
+
+.mover-card:hover {
+  border-color: var(--border2);
+}
+
+.mover-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mover-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.mover-symbol {
+  font-weight: 600;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.9rem;
+}
+
+.mover-name {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+}
+
+.mover-change {
+  text-align: right;
+}
+
+.mover-pct {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.mover-value {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+}
+
+/* Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Background orbs -->
+<div class="bg-orb orb-1"></div>
+<div class="bg-orb orb-2"></div>
+
+<div class="container">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">SOVEREIGN</div>
+    <a href="#" class="nav-item active">
+      <span class="nav-icon">📊</span>
+      <span>Dashboard</span>
+    </a>
+    <a href="#" class="nav-item">
+      <span class="nav-icon">💼</span>
+      <span>Portfolio</span>
+    </a>
+    <a href="#" class="nav-item">
+      <span class="nav-icon">📈</span>
+      <span>Markets</span>
+    </a>
+    <a href="#" class="nav-item">
+      <span class="nav-icon">🔄</span>
+      <span>Transactions</span>
+    </a>
+    <a href="#" class="nav-item">
+      <span class="nav-icon">📋</span>
+      <span>Reports</span>
+    </a>
+    <a href="#" class="nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span>Settings</span>
+    </a>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <!-- Header -->
+    <div class="header">
+      <h1 class="greeting">Good afternoon, Alexandra</h1>
+      <p class="subhead">Your portfolio is performing well · Updated 12:43 PM EST</p>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-label">Total Value</div>
+        <div class="stat-value">$847,392</div>
+        <div class="stat-change up">▲ $12,847 (1.54%)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">24h Change</div>
+        <div class="stat-value">+$8,241</div>
+        <div class="stat-change up">▲ 0.98%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Gain/Loss</div>
+        <div class="stat-value">+$94,392</div>
+        <div class="stat-change up">▲ 12.54%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Cash Available</div>
+        <div class="stat-value">$43,820</div>
+        <div class="stat-change" style="color:var(--muted)">● Ready</div>
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid">
+      <!-- Portfolio Performance -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Portfolio Performance</h2>
+          <div class="period-tabs">
+            <button class="tab" onclick="switchPeriod(this, '1W')">1W</button>
+            <button class="tab active" onclick="switchPeriod(this, '1M')">1M</button>
+            <button class="tab" onclick="switchPeriod(this, '3M')">3M</button>
+            <button class="tab" onclick="switchPeriod(this, '1Y')">1Y</button>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="portfolioChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Asset Allocation -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Asset Allocation</h2>
+        </div>
+        <div class="chart-container" style="height:200px">
+          <canvas id="allocationChart"></canvas>
+        </div>
+        <div class="allocation-legend" id="allocationLegend"></div>
+      </div>
+    </div>
+
+    <!-- Holdings + Risk/Movers -->
+    <div class="grid">
+      <!-- Holdings Table -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Holdings</h2>
+        </div>
+        <table class="holdings-table">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Shares</th>
+              <th>Value</th>
+              <th>P&L</th>
+              <th>24h</th>
+              <th>Trend</th>
+            </tr>
+          </thead>
+          <tbody id="holdingsBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Risk + Top Movers -->
+      <div>
+        <!-- Risk Meter -->
+        <div class="card" style="margin-bottom:1.5rem">
+          <div class="card-header">
+            <h2 class="card-title">Risk Score</h2>
+          </div>
+          <div class="risk-meter">
+            <div class="risk-circle">
+              <div class="risk-score">7.2</div>
+            </div>
+            <div class="risk-label">Moderate Risk</div>
+          </div>
+        </div>
+
+        <!-- Top Movers -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Top Movers</h2>
+          </div>
+          <div class="movers-grid" id="moversGrid"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Chart.js defaults
+Chart.defaults.color = '#6b7a99';
+Chart.defaults.font.family = "'DM Mono', monospace";
+
+// Gradient helper
+function makeGradient(ctx, colorRGB) {
+  const g = ctx.createLinearGradient(0, 0, 0, 280);
+  g.addColorStop(0, `rgba(${colorRGB}, 0.3)`);
+  g.addColorStop(1, `rgba(${colorRGB}, 0)`);
+  return g;
+}
+
+// Sparkline SVG
+function sparklineSVG(data, color, width = 60, height = 28) {
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+  
+  const x = i => (i / (data.length - 1)) * (width - 4) + 2;
+  const y = v => height - 2 - ((v - min) / range) * (height - 4);
+  
+  const points = data.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+  
+  return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+    <polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5"
+      stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
+}
+
+// Generate fake spark data
+function fakeSparkData(basePrice, trending = true) {
+  return Array.from({ length: 7 }, (_, i) =>
+    basePrice + (trending ? 1 : -1) * i * basePrice * 0.008 + Math.random() * basePrice * 0.012
+  );
+}
+
+// Portfolio Chart Data
+const chartData = {
+  '1W': {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    portfolio: [827400, 831200, 828900, 835600, 841200, 844800, 847392],
+    benchmark: [827400, 829100, 827800, 830400, 832900, 835200, 837600]
+  },
+  '1M': {
+    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+    portfolio: [795000, 812400, 829800, 847392],
+    benchmark: [795000, 802300, 815600, 837600]
+  },
+  '3M': {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr'],
+    portfolio: [720000, 758000, 802000, 847392],
+    benchmark: [720000, 742000, 776000, 837600]
+  },
+  '1Y': {
+    labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'],
+    portfolio: [620000, 645000, 668000, 691000, 702000, 725000, 748000, 771000, 720000, 758000, 802000, 847392],
+    benchmark: [620000, 638000, 655000, 672000, 680000, 698000, 715000, 732000, 720000, 742000, 776000, 837600]
+  }
+};
+
+// Portfolio Chart
+let portfolioChart;
+function buildPortfolioChart(period = '1M') {
+  if (portfolioChart) portfolioChart.destroy();
+  
+  const d = chartData[period];
+  const ctx = document.getElementById('portfolioChart').getContext('2d');
+  
+  portfolioChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: d.labels,
+      datasets: [
+        {
+          label: 'Portfolio',
+          data: d.portfolio,
+          borderColor: '#7c3aed',
+          backgroundColor: makeGradient(ctx, '124,58,237'),
+          borderWidth: 2,
+          tension: 0.4,
+          fill: true,
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          pointHoverBackgroundColor: '#7c3aed',
+          pointHoverBorderColor: '#fff',
+          pointHoverBorderWidth: 2
+        },
+        {
+          label: 'S&P 500',
+          data: d.benchmark,
+          borderColor: 'rgba(107,122,153,0.5)',
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          tension: 0.4,
+          fill: false,
+          pointRadius: 0,
+          borderDash: [4, 4]
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          backgroundColor: 'rgba(20,30,48,0.95)',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          padding: 12,
+          callbacks: {
+            label: c => ` ${c.dataset.label}: $${c.parsed.y.toLocaleString()}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { display: false }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { display: false },
+          ticks: {
+            callback: v => '$' + (v/1000).toFixed(0) + 'K'
+          }
+        }
+      }
+    }
+  });
+}
+
+function switchPeriod(btn, period) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  buildPortfolioChart(period);
+}
+
+// Allocation Chart
+const allocationData = [
+  { label: 'Equities', value: 38, color: '#7c3aed' },
+  { label: 'Bonds', value: 24, color: '#a78bfa' },
+  { label: 'Real Estate', value: 18, color: '#00d4aa' },
+  { label: 'Commodities', value: 14, color: '#0095ff' },
+  { label: 'Cash', value: 6, color: '#2a3550' }
+];
+
+function buildAllocationChart() {
+  const ctx = document.getElementById('allocationChart').getContext('2d');
+  
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: allocationData.map(a => a.value),
+        backgroundColor: allocationData.map(a => a.color),
+        borderColor: '#141e30',
+        borderWidth: 3,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '72%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(20,30,48,0.95)',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          padding: 10,
+          callbacks: {
+            label: c => ` ${allocationData[c.dataIndex].label}: ${c.parsed}%`
+          }
+        }
+      }
+    }
+  });
+  
+  // Render legend
+  document.getElementById('allocationLegend').innerHTML = allocationData.map(a => `
+    <div class="legend-item">
+      <div class="legend-left">
+        <div class="legend-dot" style="background:${a.color}"></div>
+        <span>${a.label}</span>
+      </div>
+      <span class="legend-pct">${a.value}%</span>
+    </div>
+  `).join('');
+}
+
+// Holdings Data
+const holdings = [
+  { symbol: 'AAPL', name: 'Apple Inc.', shares: 450, price: 178.42, cost: 162.30, change: 1.24, up: true },
+  { symbol: 'MSFT', name: 'Microsoft Corp.', shares: 280, price: 412.78, cost: 385.20, change: -0.87, up: false },
+  { symbol: 'NVDA', name: 'NVIDIA Corp.', shares: 120, price: 884.55, cost: 720.40, change: 2.41, up: true },
+  { symbol: 'GOOGL', name: 'Alphabet Inc.', shares: 350, price: 152.38, cost: 142.10, change: 0.56, up: true },
+  { symbol: 'AMZN', name: 'Amazon.com Inc.', shares: 200, price: 178.25, cost: 168.90, change: -1.12, up: false },
+  { symbol: 'TSLA', name: 'Tesla Inc.', shares: 150, price: 248.42, cost: 215.60, change: 3.18, up: true }
+];
+
+function renderHoldings() {
+  holdings.forEach(h => {
+    h.value = h.shares * h.price;
+    h.totalCost = h.shares * h.cost;
+    h.pl = h.value - h.totalCost;
+    h.plPct = (h.pl / h.totalCost) * 100;
+    h.sparkData = fakeSparkData(h.price, h.up);
+  });
+  
+  document.getElementById('holdingsBody').innerHTML = holdings.map(h => `
+    <tr>
+      <td>
+        <div class="symbol-cell">${h.symbol}</div>
+        <div class="company-name">${h.name}</div>
+      </td>
+      <td>${h.shares.toLocaleString()}</td>
+      <td>$${h.value.toLocaleString()}</td>
+      <td class="${h.pl > 0 ? 'up' : 'down'}">
+        ${h.pl > 0 ? '+' : ''}$${Math.abs(h.pl).toLocaleString(undefined, {maximumFractionDigits: 0})}
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:0.2rem">
+          ${h.plPct > 0 ? '+' : ''}${h.plPct.toFixed(2)}%
+        </div>
+      </td>
+      <td>
+        <span class="${h.up ? 'badge-up' : 'badge-down'}">
+          ${h.up ? '▲' : '▼'} ${Math.abs(h.change).toFixed(2)}%
+        </span>
+      </td>
+      <td>${sparklineSVG(h.sparkData, h.up ? '#00d4aa' : '#ff4757')}</td>
+    </tr>
+  `).join('');
+}
+
+// Top Movers
+const movers = [
+  { symbol: 'NVDA', name: 'NVIDIA', pct: 3.18, value: '$884.55', color: 'rgba(0,212,170,0.12)', icon: '🚀', up: true },
+  { symbol: 'TSLA', name: 'Tesla', pct: 2.41, value: '$248.42', color: 'rgba(124,58,237,0.12)', icon: '⚡', up: true },
+  { symbol: 'AMZN', name: 'Amazon', pct: -1.12, value: '$178.25', color: 'rgba(255,71,87,0.12)', icon: '📦', up: false }
+];
+
+function renderMovers() {
+  document.getElementById('moversGrid').innerHTML = movers.map(m => `
+    <div class="mover-card">
+      <div class="mover-left">
+        <div class="mover-icon" style="background:${m.color}">${m.icon}</div>
+        <div>
+          <div class="mover-symbol">${m.symbol}</div>
+          <div class="mover-name">${m.name}</div>
+        </div>
+      </div>
+      <div class="mover-change">
+        <div class="mover-pct ${m.up ? 'up' : 'down'}">
+          ${m.up ? '+' : ''}${m.pct.toFixed(2)}%
+        </div>
+        <div class="mover-value">${m.value}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Initialize
+buildPortfolioChart();
+buildAllocationChart();
+renderHoldings();
+renderMovers();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OrderFlow — Elite Trading Visualizer</title>
+  
+  <!-- Fonts: Syne (display) + DM Mono (monospace) -->
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js for market depth and volume profile -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  
+  <style>
+    :root {
+      --bg:       #080c12;
+      --bg2:      #0d1420;
+      --surface:  #141e30;
+      --surface2: #1a2640;
+      --border:   rgba(255,255,255,0.06);
+      --border2:  rgba(255,255,255,0.12);
+      --text:     #e8edf5;
+      --muted:    #6b7a99;
+      --accent:   #f59e0b;   /* amber/orange accent */
+      --buy:      #10b981;   /* green */
+      --sell:     #ef4444;   /* red */
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* Background grid overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-image: 
+        linear-gradient(rgba(245,158,11,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(245,158,11,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Glow orb */
+    .glow-orb {
+      position: fixed;
+      top: -10%;
+      right: -5%;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      background: rgba(8,12,18,0.9);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--buy);
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 6rem 2rem 2rem;
+    }
+
+    .hero {
+      margin-bottom: 2rem;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
+    }
+
+    /* Main grid layout */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1.5rem;
+      animation: fadeUp 0.6s ease 0.1s both;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover {
+      border-color: var(--border2);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card-badge {
+      font-size: 0.7rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      background: rgba(245,158,11,0.12);
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* Order Stream */
+    .order-stream {
+      grid-column: span 2;
+      max-height: 400px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .order-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-height: 340px;
+      overflow-y: auto;
+      padding-right: 0.5rem;
+    }
+
+    .order-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .order-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .order-list::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 2px;
+    }
+
+    .order-item {
+      display: grid;
+      grid-template-columns: 60px 1fr 100px 100px 80px;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      align-items: center;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .order-side {
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .order-side.buy { color: var(--buy); }
+    .order-side.sell { color: var(--sell); }
+
+    .order-time {
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    .order-price {
+      font-weight: 500;
+    }
+
+    .order-qty {
+      text-align: right;
+      color: var(--muted);
+    }
+
+    /* Price Ladder */
+    .price-ladder {
+      grid-column: span 1;
+    }
+
+    .ladder-row {
+      display: grid;
+      grid-template-columns: 1fr 100px 1fr;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+      align-items: center;
+    }
+
+    .ladder-row.best {
+      background: rgba(245,158,11,0.08);
+      border: 1px solid rgba(245,158,11,0.2);
+      border-radius: 6px;
+      margin: 0.25rem 0;
+    }
+
+    .ladder-bid {
+      text-align: right;
+      color: var(--buy);
+    }
+
+    .ladder-ask {
+      text-align: left;
+      color: var(--sell);
+    }
+
+    .ladder-price {
+      text-align: center;
+      font-weight: 600;
+    }
+
+    /* Market Depth Chart */
+    .depth-chart-container {
+      grid-column: span 2;
+      height: 300px;
+      position: relative;
+    }
+
+    /* Volume Profile */
+    .volume-profile-container {
+      grid-column: span 1;
+      height: 300px;
+      position: relative;
+    }
+
+    /* Trade Feed */
+    .trade-feed {
+      grid-column: span 2;
+      max-height: 300px;
+      overflow: hidden;
+    }
+
+    .trade-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      max-height: 240px;
+      overflow-y: auto;
+      padding-right: 0.5rem;
+    }
+
+    .trade-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .trade-list::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 2px;
+    }
+
+    .trade-item {
+      display: grid;
+      grid-template-columns: 70px 100px 100px 1fr;
+      gap: 1rem;
+      padding: 0.6rem 1rem;
+      background: var(--bg2);
+      border-left: 3px solid;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      animation: slideIn 0.3s ease;
+    }
+
+    .trade-item.buy { border-left-color: var(--buy); }
+    .trade-item.sell { border-left-color: var(--sell); }
+
+    /* Pressure Indicators */
+    .pressure-grid {
+      grid-column: span 1;
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .pressure-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .pressure-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .pressure-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+
+    .pressure-bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .pressure-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+
+    .pressure-fill.buy { background: var(--buy); }
+    .pressure-fill.sell { background: var(--sell); }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .order-stream,
+      .depth-chart-container,
+      .trade-feed {
+        grid-column: span 2;
+      }
+      .price-ladder,
+      .volume-profile-container,
+      .pressure-grid {
+        grid-column: span 1;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .order-stream,
+      .depth-chart-container,
+      .trade-feed,
+      .price-ladder,
+      .volume-profile-container,
+      .pressure-grid {
+        grid-column: span 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  
+  <div class="glow-orb"></div>
+
+  <nav>
+    <div class="nav-inner">
+      <div class="logo">OrderFlow</div>
+      <div class="status-pill">
+        <div class="pulse-dot"></div>
+        <span>Live Market Data</span>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <div class="hero">
+      <h1>Order Flow Visualizer</h1>
+      <p class="subtitle">Real-time market depth, order stream, and trade execution analytics</p>
+    </div>
+
+    <div class="grid">
+      
+      <!-- Live Order Stream -->
+      <div class="card order-stream">
+        <div class="card-header">
+          <div class="card-title">Live Order Stream</div>
+          <div class="card-badge">Real-time</div>
+        </div>
+        <div class="order-list" id="orderList"></div>
+      </div>
+
+      <!-- Price Ladder -->
+      <div class="card price-ladder">
+        <div class="card-header">
+          <div class="card-title">Price Ladder</div>
+        </div>
+        <div id="priceLadder"></div>
+      </div>
+
+      <!-- Market Depth Chart -->
+      <div class="card depth-chart-container">
+        <div class="card-header">
+          <div class="card-title">Market Depth</div>
+          <div class="card-badge">Bid/Ask Walls</div>
+        </div>
+        <canvas id="depthChart"></canvas>
+      </div>
+
+      <!-- Volume Profile -->
+      <div class="card volume-profile-container">
+        <div class="card-header">
+          <div class="card-title">Volume Profile</div>
+        </div>
+        <canvas id="volumeChart"></canvas>
+      </div>
+
+      <!-- Trade Execution Feed -->
+      <div class="card trade-feed">
+        <div class="card-header">
+          <div class="card-title">Trade Executions</div>
+          <div class="card-badge">Live Feed</div>
+        </div>
+        <div class="trade-list" id="tradeList"></div>
+      </div>
+
+      <!-- Buy/Sell Pressure Indicators -->
+      <div class="pressure-grid">
+        <div class="pressure-card">
+          <div class="pressure-label">Buy Pressure</div>
+          <div class="pressure-value" style="color: var(--buy);" id="buyPressure">0</div>
+          <div class="pressure-bar">
+            <div class="pressure-fill buy" id="buyPressureFill" style="width: 0%"></div>
+          </div>
+        </div>
+        <div class="pressure-card">
+          <div class="pressure-label">Sell Pressure</div>
+          <div class="pressure-value" style="color: var(--sell);" id="sellPressure">0</div>
+          <div class="pressure-bar">
+            <div class="pressure-fill sell" id="sellPressureFill" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // Chart.js global defaults
+    Chart.defaults.color = '#6b7a99';
+    Chart.defaults.font.family = "'DM Mono', monospace";
+
+    // Market state
+    let basePrice = 67240;
+    let orders = [];
+    let trades = [];
+    let buyPressure = 0;
+    let sellPressure = 0;
+    
+    // Market depth data
+    let depthData = {
+      bids: [],
+      asks: []
+    };
+
+    // Volume profile data
+    let volumeProfile = [];
+
+    // Initialize depth data
+    function initDepthData() {
+      depthData.bids = [];
+      depthData.asks = [];
+      
+      // Generate bid side (below current price)
+      for (let i = 0; i < 15; i++) {
+        const price = basePrice - (i * 10);
+        const volume = Math.random() * 5 + (i === 0 ? 8 : 2); // Larger volume near price
+        depthData.bids.push({ price, volume });
+      }
+      
+      // Generate ask side (above current price)
+      for (let i = 0; i < 15; i++) {
+        const price = basePrice + (i * 10);
+        const volume = Math.random() * 5 + (i === 0 ? 8 : 2);
+        depthData.asks.push({ price, volume });
+      }
+    }
+
+    // Initialize volume profile
+    function initVolumeProfile() {
+      volumeProfile = [];
+      for (let i = 0; i < 12; i++) {
+        const price = basePrice - 60 + (i * 10);
+        const buyVol = Math.random() * 400 + 100;
+        const sellVol = Math.random() * 400 + 100;
+        volumeProfile.push({ price, buyVol, sellVol });
+      }
+    }
+
+    // Generate random order
+    function generateOrder() {
+      const side = Math.random() > 0.5 ? 'buy' : 'sell';
+      const spread = 50;
+      const price = side === 'buy' 
+        ? basePrice - Math.random() * spread
+        : basePrice + Math.random() * spread;
+      const qty = Math.floor(Math.random() * 10 + 1) / 10;
+      
+      const order = {
+        id: Date.now() + Math.random(),
+        side,
+        price: price.toFixed(2),
+        qty: qty.toFixed(2),
+        time: new Date().toLocaleTimeString(),
+        symbol: 'BTC/USD'
+      };
+      
+      orders.unshift(order);
+      if (orders.length > 20) orders.pop();
+      
+      // Update pressure
+      if (side === 'buy') {
+        buyPressure += parseFloat(qty);
+      } else {
+        sellPressure += parseFloat(qty);
+      }
+      
+      renderOrders();
+      updatePressure();
+    }
+
+    // Generate trade execution
+    function generateTrade() {
+      const side = Math.random() > 0.5 ? 'buy' : 'sell';
+      const price = basePrice + (Math.random() - 0.5) * 20;
+      const qty = Math.floor(Math.random() * 5 + 0.5) / 10;
+      
+      const trade = {
+        id: Date.now() + Math.random(),
+        side,
+        price: price.toFixed(2),
+        qty: qty.toFixed(3),
+        time: new Date().toLocaleTimeString()
+      };
+      
+      trades.unshift(trade);
+      if (trades.length > 15) trades.pop();
+      
+      renderTrades();
+      
+      // Update base price slightly
+      basePrice = parseFloat(price);
+      updatePriceLadder();
+    }
+
+    // Render order stream
+    function renderOrders() {
+      const html = orders.map(o => `
+        <div class="order-item">
+          <div class="order-side ${o.side}">${o.side}</div>
+          <div class="order-time">${o.time}</div>
+          <div class="order-price">$${parseFloat(o.price).toLocaleString()}</div>
+          <div class="order-qty">${o.qty} BTC</div>
+          <div style="color: var(--muted); font-size: 0.75rem;">${o.symbol}</div>
+        </div>
+      `).join('');
+      
+      document.getElementById('orderList').innerHTML = html;
+    }
+
+    // Render trade feed
+    function renderTrades() {
+      const html = trades.map(t => `
+        <div class="trade-item ${t.side}">
+          <div style="font-weight: 600; color: ${t.side === 'buy' ? 'var(--buy)' : 'var(--sell)'}">
+            ${t.side.toUpperCase()}
+          </div>
+          <div>$${parseFloat(t.price).toLocaleString()}</div>
+          <div style="color: var(--muted)">${t.qty} BTC</div>
+          <div style="color: var(--muted); font-size: 0.75rem;">${t.time}</div>
+        </div>
+      `).join('');
+      
+      document.getElementById('tradeList').innerHTML = html;
+    }
+
+    // Render price ladder
+    function updatePriceLadder() {
+      const levels = 10;
+      const step = 10;
+      let html = '';
+      
+      for (let i = levels; i >= -levels; i--) {
+        const price = basePrice + (i * step);
+        const isBest = i === 0;
+        
+        const bidSize = i <= 0 ? (Math.random() * 3 + 0.5).toFixed(2) : '';
+        const askSize = i >= 0 ? (Math.random() * 3 + 0.5).toFixed(2) : '';
+        
+        html += `
+          <div class="ladder-row ${isBest ? 'best' : ''}">
+            <div class="ladder-bid">${bidSize}</div>
+            <div class="ladder-price">${price.toFixed(2)}</div>
+            <div class="ladder-ask">${askSize}</div>
+          </div>
+        `;
+      }
+      
+      document.getElementById('priceLadder').innerHTML = html;
+    }
+
+    // Update pressure indicators
+    function updatePressure() {
+      const total = buyPressure + sellPressure || 1;
+      const buyPct = (buyPressure / total) * 100;
+      const sellPct = (sellPressure / total) * 100;
+      
+      document.getElementById('buyPressure').textContent = buyPressure.toFixed(1);
+      document.getElementById('sellPressure').textContent = sellPressure.toFixed(1);
+      document.getElementById('buyPressureFill').style.width = buyPct + '%';
+      document.getElementById('sellPressureFill').style.width = sellPct + '%';
+    }
+
+    // Market Depth Chart
+    let depthChart;
+    function buildDepthChart() {
+      const ctx = document.getElementById('depthChart').getContext('2d');
+      
+      // Cumulative volumes for depth
+      let bidCumulative = 0;
+      const bidDepth = depthData.bids.map(b => {
+        bidCumulative += b.volume;
+        return { x: b.price, y: bidCumulative };
+      }).reverse();
+      
+      let askCumulative = 0;
+      const askDepth = depthData.asks.map(a => {
+        askCumulative += a.volume;
+        return { x: a.price, y: askCumulative };
+      });
+      
+      if (depthChart) depthChart.destroy();
+      
+      depthChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          datasets: [
+            {
+              label: 'Bids',
+              data: bidDepth,
+              borderColor: '#10b981',
+              backgroundColor: function(context) {
+                const ctx = context.chart.ctx;
+                const gradient = ctx.createLinearGradient(0, 0, 0, 250);
+                gradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+                gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+                return gradient;
+              },
+              borderWidth: 2,
+              fill: true,
+              stepped: 'before',
+              pointRadius: 0
+            },
+            {
+              label: 'Asks',
+              data: askDepth,
+              borderColor: '#ef4444',
+              backgroundColor: function(context) {
+                const ctx = context.chart.ctx;
+                const gradient = ctx.createLinearGradient(0, 0, 0, 250);
+                gradient.addColorStop(0, 'rgba(239, 68, 68, 0.3)');
+                gradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
+                return gradient;
+              },
+              borderWidth: 2,
+              fill: true,
+              stepped: 'after',
+              pointRadius: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              callbacks: {
+                label: c => ` ${c.dataset.label}: ${c.parsed.y.toFixed(2)} BTC`
+              }
+            }
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: {
+                callback: v => '$' + v.toLocaleString()
+              }
+            },
+            y: {
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: {
+                callback: v => v.toFixed(1) + ' BTC'
+              }
+            }
+          },
+          interaction: {
+            mode: 'index',
+            intersect: false
+          }
+        }
+      });
+    }
+
+    // Volume Profile Chart
+    let volumeChart;
+    function buildVolumeChart() {
+      const ctx = document.getElementById('volumeChart').getContext('2d');
+      
+      if (volumeChart) volumeChart.destroy();
+      
+      volumeChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: volumeProfile.map(v => '$' + v.price.toFixed(0)),
+          datasets: [
+            {
+              label: 'Buy Volume',
+              data: volumeProfile.map(v => v.buyVol),
+              backgroundColor: 'rgba(16, 185, 129, 0.6)',
+              borderRadius: 4,
+              borderSkipped: false
+            },
+            {
+              label: 'Sell Volume',
+              data: volumeProfile.map(v => -v.sellVol),
+              backgroundColor: 'rgba(239, 68, 68, 0.6)',
+              borderRadius: 4,
+              borderSkipped: false
+            }
+          ]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: c => ` ${c.dataset.label}: ${Math.abs(c.parsed.x).toFixed(0)}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              stacked: true,
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: {
+                callback: v => Math.abs(v).toFixed(0)
+              }
+            },
+            y: {
+              stacked: true,
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    // Update depth data dynamically
+    function updateDepthData() {
+      // Randomly adjust volumes
+      depthData.bids.forEach(b => {
+        b.volume += (Math.random() - 0.5) * 0.5;
+        b.volume = Math.max(0.5, b.volume);
+      });
+      
+      depthData.asks.forEach(a => {
+        a.volume += (Math.random() - 0.5) * 0.5;
+        a.volume = Math.max(0.5, a.volume);
+      });
+      
+      buildDepthChart();
+    }
+
+    // Initialize
+    initDepthData();
+    initVolumeProfile();
+    updatePriceLadder();
+    buildDepthChart();
+    buildVolumeChart();
+    updatePressure();
+
+    // Generate initial data
+    for (let i = 0; i < 10; i++) {
+      generateOrder();
+      generateTrade();
+    }
+
+    // Live updates
+    setInterval(generateOrder, 800);  // New order every 0.8s
+    setInterval(generateTrade, 1200); // New trade every 1.2s
+    setInterval(updateDepthData, 3000); // Update depth every 3s
+    
+    // Decay pressure over time
+    setInterval(() => {
+      buyPressure *= 0.95;
+      sellPressure *= 0.95;
+      updatePressure();
+    }, 2000);
+  </script>
+
+</body>
+</html>

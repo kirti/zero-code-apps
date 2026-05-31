@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apex Analytics — SaaS Dashboard</title>
+  
+  <!-- Google Fonts: Syne + DM Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg:       #080c12;
+      --bg2:      #0d1420;
+      --surface:  #141e30;
+      --surface2: #1a2640;
+      --border:   rgba(255,255,255,0.06);
+      --border2:  rgba(255,255,255,0.12);
+      --text:     #e8edf5;
+      --muted:    #6b7a99;
+      --accent:   #00d4aa;
+      --accent2:  #0095ff;
+      --red:      #ff4757;
+      --green:    #00d4aa;
+    }
+
+    body {
+      font-family: 'DM Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* Background Atmosphere */
+    .bg-grid {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(0,212,170,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,170,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glow-orb {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,212,170,0.08) 0%, transparent 70%);
+      top: -200px;
+      right: -200px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      background: rgba(8,12,18,0.85);
+      border-bottom: 1px solid var(--border);
+    }
+
+    nav .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    nav .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: var(--accent);
+      letter-spacing: -0.03em;
+    }
+
+    nav .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+
+    nav a:hover {
+      color: var(--text);
+    }
+
+    /* Main Container */
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 7rem 2rem 4rem;
+    }
+
+    /* Header */
+    .header {
+      margin-bottom: 3rem;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .header h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .header p {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    /* Metric Cards Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+      animation: fadeUp 0.6s ease 0.1s both;
+    }
+
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .metric-card:hover {
+      border-color: var(--border2);
+      transform: translateY(-2px);
+    }
+
+    .metric-label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+
+    .metric-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.25rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.02em;
+    }
+
+    .metric-trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      background: rgba(0,212,170,0.1);
+      color: var(--green);
+    }
+
+    .metric-trend.down {
+      background: rgba(255,71,87,0.1);
+      color: var(--red);
+    }
+
+    .metric-trend .arrow {
+      font-size: 1rem;
+    }
+
+    /* Charts Grid */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+      animation: fadeUp 0.6s ease 0.2s both;
+    }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: border-color 0.2s;
+    }
+
+    .chart-card:hover {
+      border-color: var(--border2);
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .chart-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+
+    .chart-tabs {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .tab {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 0.4rem 0.9rem;
+      border-radius: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      border-color: var(--border2);
+      color: var(--text);
+    }
+
+    .tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg);
+    }
+
+    .chart-container {
+      height: 280px;
+      position: relative;
+    }
+
+    /* Funnel Chart */
+    .funnel-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1rem 0;
+    }
+
+    .funnel-stage {
+      position: relative;
+    }
+
+    .funnel-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .funnel-label span:first-child {
+      color: var(--text);
+    }
+
+    .funnel-label span:last-child {
+      color: var(--muted);
+    }
+
+    .funnel-bar-bg {
+      background: rgba(255,255,255,0.04);
+      border-radius: 8px;
+      height: 36px;
+      overflow: hidden;
+    }
+
+    .funnel-bar {
+      height: 100%;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      padding-left: 1rem;
+      font-weight: 500;
+      transition: width 0.8s ease;
+    }
+
+    /* Subscription Breakdown */
+    .plan-legend {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .plan-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .plan-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    .plan-info {
+      flex: 1;
+    }
+
+    .plan-name {
+      font-size: 0.85rem;
+      color: var(--text);
+      margin-bottom: 0.2rem;
+    }
+
+    .plan-value {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* Full Width Sections */
+    .full-width-section {
+      animation: fadeUp 0.6s ease 0.3s both;
+      margin-bottom: 2.5rem;
+    }
+
+    /* Table */
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      text-align: left;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      font-weight: 500;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+
+    tbody tr:hover {
+      background: rgba(255,255,255,0.02);
+    }
+
+    tbody td {
+      padding: 1.25rem 0;
+      font-size: 0.9rem;
+    }
+
+    .company-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .company-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--accent);
+    }
+
+    .company-name {
+      font-weight: 500;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.3rem 0.7rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .badge.enterprise {
+      background: rgba(0,149,255,0.15);
+      color: var(--accent2);
+    }
+
+    .badge.pro {
+      background: rgba(0,212,170,0.15);
+      color: var(--accent);
+    }
+
+    .badge.starter {
+      background: rgba(107,122,153,0.15);
+      color: var(--muted);
+    }
+
+    /* Cohort Heatmap */
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: 120px repeat(6, 1fr);
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .heatmap-label {
+      display: flex;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+      padding: 0.75rem;
+    }
+
+    .heatmap-cell {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem;
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: transform 0.2s;
+    }
+
+    .heatmap-cell:hover {
+      transform: scale(1.05);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 1024px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .heatmap-grid {
+        grid-template-columns: 80px repeat(6, 1fr);
+        gap: 0.3rem;
+      }
+      
+      .heatmap-cell {
+        font-size: 0.75rem;
+        padding: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+  <div class="glow-orb"></div>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="container">
+      <div class="logo">APEX</div>
+      <ul class="nav-links">
+        <li><a href="#dashboard">Dashboard</a></li>
+        <li><a href="#analytics">Analytics</a></li>
+        <li><a href="#customers">Customers</a></li>
+        <li><a href="#settings">Settings</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+    <!-- Header -->
+    <div class="header">
+      <h1>Analytics Dashboard</h1>
+      <p>Real-time SaaS metrics and performance indicators</p>
+    </div>
+
+    <!-- Metric Cards -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">MRR</div>
+        <div class="metric-value">$184,391</div>
+        <div class="metric-trend">
+          <span class="arrow">↑</span>
+          <span>12.4% vs last month</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">ARR</div>
+        <div class="metric-value">$2.21M</div>
+        <div class="metric-trend">
+          <span class="arrow">↑</span>
+          <span>18.7% YoY growth</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">Churn Rate</div>
+        <div class="metric-value">2.4%</div>
+        <div class="metric-trend down">
+          <span class="arrow">↑</span>
+          <span>0.3% vs last month</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-label">Daily Active Users</div>
+        <div class="metric-value">12,847</div>
+        <div class="metric-trend">
+          <span class="arrow">↑</span>
+          <span>8.2% vs yesterday</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue Chart + Subscription Breakdown -->
+    <div class="charts-grid">
+      <!-- Revenue Growth -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Revenue Growth</h3>
+          <div class="chart-tabs">
+            <button class="tab active" onclick="switchRevenuePeriod(this, '6M')">6M</button>
+            <button class="tab" onclick="switchRevenuePeriod(this, '1Y')">1Y</button>
+            <button class="tab" onclick="switchRevenuePeriod(this, 'ALL')">ALL</button>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Subscription Breakdown -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Subscription Plans</h3>
+        </div>
+        <div class="chart-container" style="height: 200px;">
+          <canvas id="subscriptionChart"></canvas>
+        </div>
+        <div class="plan-legend">
+          <div class="plan-item">
+            <div class="plan-color" style="background: #00d4aa;"></div>
+            <div class="plan-info">
+              <div class="plan-name">Enterprise</div>
+              <div class="plan-value">38%</div>
+            </div>
+          </div>
+          <div class="plan-item">
+            <div class="plan-color" style="background: #0095ff;"></div>
+            <div class="plan-info">
+              <div class="plan-name">Pro</div>
+              <div class="plan-value">31%</div>
+            </div>
+          </div>
+          <div class="plan-item">
+            <div class="plan-color" style="background: #f5c842;"></div>
+            <div class="plan-info">
+              <div class="plan-name">Starter</div>
+              <div class="plan-value">22%</div>
+            </div>
+          </div>
+          <div class="plan-item">
+            <div class="plan-color" style="background: #2a3550;"></div>
+            <div class="plan-info">
+              <div class="plan-name">Trial</div>
+              <div class="plan-value">9%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Acquisition Funnel -->
+    <div class="full-width-section">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">User Acquisition Funnel</h3>
+          <p style="color: var(--muted); font-size: 0.85rem;">Last 30 days</p>
+        </div>
+        <div class="funnel-chart">
+          <div class="funnel-stage">
+            <div class="funnel-label">
+              <span>Website Visitors</span>
+              <span>48,291</span>
+            </div>
+            <div class="funnel-bar-bg">
+              <div class="funnel-bar" style="width: 100%; background: linear-gradient(90deg, #00d4aa 0%, #00a885 100%);">
+                100%
+              </div>
+            </div>
+          </div>
+          <div class="funnel-stage">
+            <div class="funnel-label">
+              <span>Sign Ups</span>
+              <span>8,142</span>
+            </div>
+            <div class="funnel-bar-bg">
+              <div class="funnel-bar" style="width: 68%; background: linear-gradient(90deg, #0095ff 0%, #006fcc 100%);">
+                16.9%
+              </div>
+            </div>
+          </div>
+          <div class="funnel-stage">
+            <div class="funnel-label">
+              <span>Activated</span>
+              <span>5,824</span>
+            </div>
+            <div class="funnel-bar-bg">
+              <div class="funnel-bar" style="width: 48%; background: linear-gradient(90deg, #f5c842 0%, #d4a832 100%);">
+                12.1%
+              </div>
+            </div>
+          </div>
+          <div class="funnel-stage">
+            <div class="funnel-label">
+              <span>Paid Conversion</span>
+              <span>1,847</span>
+            </div>
+            <div class="funnel-bar-bg">
+              <div class="funnel-bar" style="width: 32%; background: linear-gradient(90deg, #9b59b6 0%, #7d3c98 100%);">
+                3.8%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Customers Table -->
+    <div class="full-width-section">
+      <div class="table-card">
+        <div class="chart-header" style="margin-bottom: 1.5rem;">
+          <h3 class="chart-title">Top Customers by MRR</h3>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Company</th>
+              <th>Plan</th>
+              <th>MRR</th>
+              <th>Growth</th>
+              <th>Since</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="company-cell">
+                  <div class="company-avatar">A</div>
+                  <span class="company-name">Acme Corporation</span>
+                </div>
+              </td>
+              <td><span class="badge enterprise">Enterprise</span></td>
+              <td>$12,400</td>
+              <td style="color: var(--green);">↑ 24%</td>
+              <td style="color: var(--muted);">Jan 2022</td>
+            </tr>
+            <tr>
+              <td>
+                <div class="company-cell">
+                  <div class="company-avatar">G</div>
+                  <span class="company-name">GlobalTech Inc</span>
+                </div>
+              </td>
+              <td><span class="badge enterprise">Enterprise</span></td>
+              <td>$11,200</td>
+              <td style="color: var(--green);">↑ 18%</td>
+              <td style="color: var(--muted);">Mar 2022</td>
+            </tr>
+            <tr>
+              <td>
+                <div class="company-cell">
+                  <div class="company-avatar">V</div>
+                  <span class="company-name">Vertex Solutions</span>
+                </div>
+              </td>
+              <td><span class="badge pro">Pro</span></td>
+              <td>$8,900</td>
+              <td style="color: var(--green);">↑ 31%</td>
+              <td style="color: var(--muted);">Jul 2022</td>
+            </tr>
+            <tr>
+              <td>
+                <div class="company-cell">
+                  <div class="company-avatar">N</div>
+                  <span class="company-name">Nexus Digital</span>
+                </div>
+              </td>
+              <td><span class="badge pro">Pro</span></td>
+              <td>$7,650</td>
+              <td style="color: var(--red);">↓ 5%</td>
+              <td style="color: var(--muted);">Oct 2022</td>
+            </tr>
+            <tr>
+              <td>
+                <div class="company-cell">
+                  <div class="company-avatar">Z</div>
+                  <span class="company-name">Zenith Labs</span>
+                </div>
+              </td>
+              <td><span class="badge pro">Pro</span></td>
+              <td>$6,480</td>
+              <td style="color: var(--green);">↑ 12%</td>
+              <td style="color: var(--muted);">Nov 2022</td>
+            </tr>
+            <tr>
+              <td>
+                <div class="company-cell">
+                  <div class="company-avatar">P</div>
+                  <span class="company-name">Prism Analytics</span>
+                </div>
+              </td>
+              <td><span class="badge starter">Starter</span></td>
+              <td>$4,200</td>
+              <td style="color: var(--green);">↑ 8%</td>
+              <td style="color: var(--muted);">Dec 2022</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Cohort Retention Heatmap -->
+    <div class="full-width-section">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Cohort Retention Analysis</h3>
+          <p style="color: var(--muted); font-size: 0.85rem;">Monthly retention % by signup cohort</p>
+        </div>
+        <div class="heatmap-grid">
+          <div class="heatmap-label">Cohort</div>
+          <div class="heatmap-label">Month 0</div>
+          <div class="heatmap-label">Month 1</div>
+          <div class="heatmap-label">Month 2</div>
+          <div class="heatmap-label">Month 3</div>
+          <div class="heatmap-label">Month 4</div>
+          <div class="heatmap-label">Month 5</div>
+
+          <div class="heatmap-label">Nov 2023</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,1); color: var(--bg);">100%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.85);">94%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.75);">88%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.65);">84%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.55);">81%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.5);">79%</div>
+
+          <div class="heatmap-label">Dec 2023</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,1); color: var(--bg);">100%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.82);">92%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.7);">86%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.6);">82%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.52);">80%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.0); border-style: dashed;">—</div>
+
+          <div class="heatmap-label">Jan 2024</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,1); color: var(--bg);">100%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.88);">96%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.78);">90%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.68);">85%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.0); border-style: dashed;">—</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.0); border-style: dashed;">—</div>
+
+          <div class="heatmap-label">Feb 2024</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,1); color: var(--bg);">100%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.8);">91%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.68);">85%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.0); border-style: dashed;">—</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.0); border-style: dashed;">—</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.0); border-style: dashed;">—</div>
+
+          <div class="heatmap-label">Mar 2024</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,1); color: var(--bg);">100%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.86);">95%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.0); border-style: dashed;">—</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.0); border-style: dashed;">—</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.0); border-style: dashed;">—</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.0); border-style: dashed;">—</div>
+
+          <div class="heatmap-label">Apr 2024</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,1); color: var(--bg);">100%</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.0); border-style: dashed;">—</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.0); border-style: dashed;">—</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.0); border-style: dashed;">—</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.0); border-style: dashed;">—</div>
+          <div class="heatmap-cell" style="background: rgba(0,212,170,0.0); border-style: dashed;">—</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // Chart.js Global Defaults
+    Chart.defaults.color = '#6b7a99';
+    Chart.defaults.font.family = "'DM Mono', monospace";
+
+    // Gradient Helper
+    function makeGradient(ctx, colorRGB) {
+      const g = ctx.createLinearGradient(0, 0, 0, 280);
+      g.addColorStop(0, `rgba(${colorRGB}, 0.3)`);
+      g.addColorStop(1, `rgba(${colorRGB}, 0)`);
+      return g;
+    }
+
+    // Revenue Chart Data
+    const revenueData = {
+      '6M': {
+        labels: ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'],
+        data: [142000, 156000, 164000, 171000, 178000, 184391]
+      },
+      '1Y': {
+        labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'],
+        data: [98000, 108000, 118000, 127000, 132000, 138000, 142000, 156000, 164000, 171000, 178000, 184391]
+      },
+      'ALL': {
+        labels: ['Q1 22', 'Q2 22', 'Q3 22', 'Q4 22', 'Q1 23', 'Q2 23', 'Q3 23', 'Q4 23', 'Q1 24'],
+        data: [42000, 58000, 71000, 84000, 98000, 118000, 132000, 156000, 184391]
+      }
+    };
+
+    let revenueChart;
+
+    function buildRevenueChart(period = '6M') {
+      const ctx = document.getElementById('revenueChart').getContext('2d');
+      if (revenueChart) revenueChart.destroy();
+
+      const d = revenueData[period];
+
+      revenueChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: d.labels,
+          datasets: [{
+            label: 'MRR',
+            data: d.data,
+            borderColor: '#00d4aa',
+            backgroundColor: makeGradient(ctx, '0,212,170'),
+            borderWidth: 2.5,
+            tension: 0.4,
+            fill: true,
+            pointRadius: 0,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#00d4aa',
+            pointHoverBorderColor: '#fff',
+            pointHoverBorderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(13,20,32,0.95)',
+              titleColor: '#e8edf5',
+              bodyColor: '#e8edf5',
+              borderColor: 'rgba(255,255,255,0.1)',
+              borderWidth: 1,
+              padding: 12,
+              displayColors: false,
+              callbacks: {
+                label: c => ` MRR: $${c.parsed.y.toLocaleString()}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: '#6b7a99' }
+            },
+            y: {
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: {
+                color: '#6b7a99',
+                callback: v => '$' + (v / 1000).toFixed(0) + 'K'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function switchRevenuePeriod(btn, period) {
+      document.querySelectorAll('.chart-tabs .tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      buildRevenueChart(period);
+    }
+
+    // Subscription Donut Chart
+    const subCtx = document.getElementById('subscriptionChart').getContext('2d');
+    new Chart(subCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Enterprise', 'Pro', 'Starter', 'Trial'],
+        datasets: [{
+          data: [38, 31, 22, 9],
+          backgroundColor: ['#00d4aa', '#0095ff', '#f5c842', '#2a3550'],
+          borderColor: '#141e30',
+          borderWidth: 4,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(13,20,32,0.95)',
+            titleColor: '#e8edf5',
+            bodyColor: '#e8edf5',
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1,
+            padding: 12,
+            callbacks: {
+              label: c => ` ${c.label}: ${c.parsed}%`
+            }
+          }
+        }
+      }
+    });
+
+    // Initialize Revenue Chart
+    buildRevenueChart();
+
+    // Animate funnel bars on load
+    window.addEventListener('load', () => {
+      document.querySelectorAll('.funnel-bar').forEach((bar, i) => {
+        const w = bar.style.width;
+        bar.style.width = '0';
+        setTimeout(() => {
+          bar.style.width = w;
+        }, 400 + (i * 150));
+      });
+    });
+  </script>
+
+</body>
+</html>

@@ -11,17 +11,21 @@
     "url": "https://github.com/kirti/zero-code-apps.git"
   },
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "npx serve . --listen 3000",
-    "start": "npx serve . --listen 3000",
-    "setup": "node scripts/setup.js",
-    "postinstall": "node scripts/setup.js"
+    "build:skills": "node scripts/build-skills.js",
+    "dev": "npm run build:skills && npx serve . --listen 3000",
+    "start": "npm run build:skills && npx serve . --listen 3000",
+    "prebuild": "npm run build:skills",
+    "setup": "node scripts/setup.js"
+  },
+  "dependencies": {
+    "skillforge-ai": "^1.1.0"
   },
   "devDependencies": {
     "serve": "^14.0.0"
   },
   "engines": {
     "node": ">=16.0.0"
-  },
-  "type": "module"
+  }
 }

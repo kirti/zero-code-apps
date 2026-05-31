@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CryptoVault — Premium Trading Dashboard</title>
+  
+  <!-- Fonts: Syne (display) + DM Mono (mono) -->
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --bg:       #080c12;
+      --bg2:      #0d1420;
+      --surface:  #141e30;
+      --surface2: #1a2640;
+      --border:   rgba(255,255,255,0.06);
+      --border2:  rgba(255,255,255,0.12);
+      --text:     #e8edf5;
+      --muted:    #6b7a99;
+      --accent:   #00d4aa;
+      --accent2:  #0095ff;
+      --red:      #ff4757;
+      --green:    #00d4aa;
+    }
+    
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      line-height: 1.6;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    /* Background atmosphere */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0,212,170,0.06) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -30%;
+      right: -5%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(0,149,255,0.05) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    /* Grid overlay */
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(0,212,170,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,170,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      background: rgba(8,12,18,0.85);
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .nav-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+    }
+    
+    #dataStatus {
+      font-size: 0.75rem;
+      font-family: 'DM Mono', monospace;
+    }
+    
+    .status-live { color: var(--green); }
+    .status-demo { color: var(--muted); }
+    
+    /* Main container */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 7rem 2rem 3rem;
+    }
+    
+    /* Hero stats */
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+      animation: fadeUp 0.6s ease 0.1s both;
+    }
+    
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    
+    .stat-card:hover {
+      border-color: var(--border2);
+      transform: translateY(-2px);
+    }
+    
+    .stat-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-change {
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .stat-change.up { color: var(--green); }
+    .stat-change.down { color: var(--red); }
+    
+    /* Main grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.6s ease 0.2s both;
+    }
+    
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: border-color 0.2s;
+    }
+    
+    .card:hover {
+      border-color: var(--border2);
+    }
+    
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    
+    /* Period tabs */
+    .period-tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: var(--bg2);
+      padding: 0.25rem;
+      border-radius: 8px;
+    }
+    
+    .period-tab {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .period-tab:hover {
+      color: var(--text);
+    }
+    
+    .period-tab.active {
+      background: var(--accent);
+      color: var(--bg);
+      font-weight: 500;
+    }
+    
+    /* Chart container */
+    .chart-container {
+      position: relative;
+      height: 300px;
+    }
+    
+    .donut-container {
+      position: relative;
+      height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* Allocation legend */
+    .allocation-legend {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+    
+    .legend-label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      flex: 1;
+    }
+    
+    .legend-value {
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    
+    /* Watchlist table */
+    .watchlist-section {
+      animation: fadeUp 0.6s ease 0.3s both;
+    }
+    
+    .watchlist {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .watchlist th {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-align: left;
+      padding: 0 1rem 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      font-weight: 400;
+    }
+    
+    .watchlist td {
+      padding: 1rem;
+      font-size: 0.85rem;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .watchlist tr:hover td {
+      background: rgba(255,255,255,0.02);
+    }
+    
+    .symbol-cell {
+      font-weight: 600;
+    }
+    
+    .symbol-name {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+    
+    .badge-up {
+      background: rgba(0,212,170,0.12);
+      color: var(--green);
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+    
+    .badge-down {
+      background: rgba(255,71,87,0.12);
+      color: var(--red);
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+    
+    /* Ticker bar */
+    .ticker-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      overflow: hidden;
+      padding: 0.75rem 0;
+      z-index: 100;
+    }
+    
+    .ticker-track {
+      display: flex;
+      gap: 3rem;
+      animation: ticker 40s linear infinite;
+      width: max-content;
+    }
+    
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+    
+    .ticker-item {
+      display: flex;
+      gap: 0.75rem;
+      white-space: nowrap;
+      font-size: 0.82rem;
+      align-items: center;
+    }
+    
+    .ticker-symbol {
+      color: var(--text);
+      font-weight: 500;
+    }
+    
+    .ticker-price {
+      color: var(--muted);
+    }
+    
+    .ticker-change.up { color: var(--green); }
+    .ticker-change.down { color: var(--red); }
+    
+    /* Portfolio center display */
+    .portfolio-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    
+    .portfolio-total {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    
+    .portfolio-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 0.25rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 968px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .hero-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 640px) {
+      .container {
+        padding: 6rem 1rem 3rem;
+      }
+      
+      .nav-inner {
+        padding: 1rem;
+      }
+      
+      .hero-stats {
+        grid-template-columns: 1fr;
+      }
+      
+      .allocation-legend {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-overlay"></div>
+  
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-inner">
+      <div class="logo">CryptoVault</div>
+      <div id="dataStatus"></div>
+    </div>
+  </nav>
+  
+  <!-- Main Container -->
+  <div class="container">
+    <!-- Hero Stats -->
+    <div class="hero-stats" id="heroStats">
+      <!-- Populated by JS -->
+    </div>
+    
+    <!-- Main Grid: Chart + Allocation -->
+    <div class="main-grid">
+      <!-- Price Chart Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">BTC/USD Price</h2>
+          <div class="period-tabs">
+            <button class="period-tab active" onclick="switchPeriod(this, '1D')">1D</button>
+            <button class="period-tab" onclick="switchPeriod(this, '1W')">1W</button>
+            <button class="period-tab" onclick="switchPeriod(this, '1M')">1M</button>
+            <button class="period-tab" onclick="switchPeriod(this, '3M')">3M</button>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="priceChart"></canvas>
+        </div>
+      </div>
+      
+      <!-- Portfolio Allocation -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Portfolio Allocation</h2>
+        </div>
+        <div class="donut-container">
+          <canvas id="allocationChart"></canvas>
+          <div class="portfolio-center">
+            <div class="portfolio-total">$284,391</div>
+            <div class="portfolio-label">Total Value</div>
+          </div>
+        </div>
+        <div class="allocation-legend">
+          <div class="legend-item">
+            <div class="legend-color" style="background: #00d4aa;"></div>
+            <div class="legend-label">Bitcoin</div>
+            <div class="legend-value">42%</div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #0095ff;"></div>
+            <div class="legend-label">Ethereum</div>
+            <div class="legend-value">28%</div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #f5c842;"></div>
+            <div class="legend-label">Solana</div>
+            <div class="legend-value">18%</div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #2a3550;"></div>
+            <div class="legend-label">Others</div>
+            <div class="legend-value">12%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Watchlist Table -->
+    <div class="card watchlist-section">
+      <div class="card-header">
+        <h2 class="card-title">Watchlist</h2>
+      </div>
+      <table class="watchlist">
+        <thead>
+          <tr>
+            <th>Symbol</th>
+            <th>Price</th>
+            <th>24h Change</th>
+            <th>24h %</th>
+            <th>Market Cap</th>
+            <th>7d Trend</th>
+          </tr>
+        </thead>
+        <tbody id="watchlistBody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <!-- Ticker Bar -->
+  <div class="ticker-bar">
+    <div class="ticker-track" id="tickerTrack">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+  
+  <script>
+    // ==================== CHART.JS GLOBAL DEFAULTS ====================
+    Chart.defaults.color = '#6b7a99';
+    Chart.defaults.font.family = "'DM Mono', monospace";
+    
+    // ==================== GRADIENT HELPER ====================
+    function makeGradient(ctx, colorRGB) {
+      const g = ctx.createLinearGradient(0, 0, 0, 300);
+      g.addColorStop(0, `rgba(${colorRGB}, 0.3)`);
+      g.addColorStop(1, `rgba(${colorRGB}, 0)`);
+      return g;
+    }
+    
+    // ==================== SPARKLINE SVG GENERATOR ====================
+    function sparklineSVG(data, color, width = 80, height = 32) {
+      if (!data || data.length === 0) return '';
+      
+      const max = Math.max(...data);
+      const min = Math.min(...data);
+      const range = max - min || 1;
+      
+      const x = i => (i / (data.length - 1)) * (width - 4) + 2;
+      const y = v => height - 2 - ((v - min) / range) * (height - 4);
+      
+      const points = data.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+      
+      return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+        <polyline points="${points}" fill="none" stroke="${color}" stroke-width="2"
+          stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>`;
+    }
+    
+    // ==================== DATA STATUS ====================
+    function setStatus(type) {
+      const el = document.getElementById('dataStatus');
+      if (type === 'live') {
+        el.innerHTML = `<span class="status-live">● Live</span> · Updated ${new Date().toLocaleTimeString()}`;
+      } else {
+        el.innerHTML = `<span class="status-demo">○ Demo data</span>`;
+      }
+    }
+    
+    // ==================== FALLBACK DATA ====================
+    const CRYPTO_FALLBACK = [
+      {
+        id: 'bitcoin',
+        symbol: 'BTC',
+        name: 'Bitcoin',
+        current_price: 67240,
+        price_change_24h: 1420,
+        price_change_percentage_24h: 2.14,
+        market_cap: 1320000000000,
+        sparkline_in_7d: { price: Array.from({length: 168}, (_, i) => 66000 + Math.sin(i/20)*2000 + Math.random()*1000) }
+      },
+      {
+        id: 'ethereum',
+        symbol: 'ETH',
+        name: 'Ethereum',
+        current_price: 3182,
+        price_change_24h: -28,
+        price_change_percentage_24h: -0.87,
+        market_cap: 382000000000,
+        sparkline_in_7d: { price: Array.from({length: 168}, (_, i) => 3200 - Math.sin(i/15)*100 + Math.random()*50) }
+      },
+      {
+        id: 'solana',
+        symbol: 'SOL',
+        name: 'Solana',
+        current_price: 168,
+        price_change_24h: 5.2,
+        price_change_percentage_24h: 3.21,
+        market_cap: 75000000000,
+        sparkline_in_7d: { price: Array.from({length: 168}, (_, i) => 165 + Math.sin(i/12)*8 + Math.random()*4) }
+      },
+      {
+        id: 'binancecoin',
+        symbol: 'BNB',
+        name: 'BNB',
+        current_price: 582,
+        price_change_24h: 8.4,
+        price_change_percentage_24h: 1.46,
+        market_cap: 84000000000,
+        sparkline_in_7d: { price: Array.from({length: 168}, (_, i) => 580 + Math.sin(i/18)*15 + Math.random()*8) }
+      },
+      {
+        id: 'ripple',
+        symbol: 'XRP',
+        name: 'XRP',
+        current_price: 0.52,
+        price_change_24h: -0.01,
+        price_change_percentage_24h: -1.89,
+        market_cap: 28000000000,
+        sparkline_in_7d: { price: Array.from({length: 168}, (_, i) => 0.53 - Math.sin(i/22)*0.02 + Math.random()*0.01) }
+      },
+      {
+        id: 'cardano',
+        symbol: 'ADA',
+        name: 'Cardano',
+        current_price: 0.46,
+        price_change_24h: 0.02,
+        price_change_percentage_24h: 4.54,
+        market_cap: 16000000000,
+        sparkline_in_7d: { price: Array.from({length: 168}, (_, i) => 0.44 + Math.sin(i/16)*0.03 + Math.random()*0.015) }
+      },
+      {
+        id: 'dogecoin',
+        symbol: 'DOGE',
+        name: 'Dogecoin',
+        current_price: 0.089,
+        price_change_24h: -0.003,
+        price_change_percentage_24h: -3.26,
+        market_cap: 13000000000,
+        sparkline_in_7d: { price: Array.from({length: 168}, (_, i) => 0.091 - Math.sin(i/20)*0.005 + Math.random()*0.003) }
+      },
+      {
+        id: 'toncoin',
+        symbol: 'TON',
+        name: 'Toncoin',
+        current_price: 5.42,
+        price_change_24h: 0.18,
+        price_change_percentage_24h: 3.43,
+        market_cap: 18000000000,
+        sparkline_in_7d: { price: Array.from({length: 168}, (_, i) => 5.3 + Math.sin(i/14)*0.3 + Math.random()*0.15) }
+      }
+    ];
+    
+    // ==================== GLOBAL STATE ====================
+    let cryptoData = [...CRYPTO_FALLBACK];
+    let priceChart = null;
+    let allocationChart = null;
+    
+    // ==================== LOAD CRYPTO DATA ====================
+    async function loadCryptoData() {
+      try {
+        const url = 'https://api.coingecko.com/api/v3/coins/markets' +
+          '?vs_currency=usd' +
+          '&ids=bitcoin,ethereum,solana,binancecoin,ripple,cardano,dogecoin,toncoin' +
+          '&order=market_cap_desc' +
+          '&sparkline=true' +
+          '&price_change_percentage=24h';
+        
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('API failed');
+        
+        const data = await res.json();
+        cryptoData = data.map(coin => ({
+          ...coin,
+          symbol: coin.symbol.toUpperCase()
+        }));
+        
+        setStatus('live');
+        return true;
+      } catch (e) {
+        console.log('Using fallback data:', e);
+        cryptoData = [...CRYPTO_FALLBACK];
+        setStatus('demo');
+        return false;
+      }
+    }
+    
+    // ==================== RENDER HERO STATS ====================
+    function renderHeroStats() {
+      const btc = cryptoData.find(c => c.id === 'bitcoin');
+      const eth = cryptoData.find(c => c.id === 'ethereum');
+      const sol = cryptoData.find(c => c.id === 'solana');
+      
+      const totalPortfolio = 284391;
+      const dayChange = 3842;
+      const dayPct = (dayChange / totalPortfolio) * 100;
+      
+      document.getElementById('heroStats').innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Bitcoin</div>
+          <div class="stat-value">$${btc.current_price.toLocaleString()}</div>
+          <div class="stat-change ${btc.price_change_percentage_24h >= 0 ? 'up' : 'down'}">
+            ${btc.price_change_percentage_24h >= 0 ? '▲' : '▼'} ${Math.abs(btc.price_change_percentage_24h).toFixed(2)}%
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-label">Ethereum</div>
+          <div class="stat-value">$${eth.current_price.toLocaleString()}</div>
+          <div class="stat-change ${eth.price_change_percentage_24h >= 0 ? 'up' : 'down'}">
+            ${eth.price_change_percentage_24h >= 0 ? '▲' : '▼'} ${Math.abs(eth.price_change_percentage_24h).toFixed(2)}%
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-label">Solana</div>
+          <div class="stat-value">$${sol.current_price.toLocaleString()}</div>
+          <div class="stat-change ${sol.price_change_percentage_24h >= 0 ? 'up' : 'down'}">
+            ${sol.price_change_percentage_24h >= 0 ? '▲' : '▼'} ${Math.abs(sol.price_change_percentage_24h).toFixed(2)}%
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-label">Portfolio Value</div>
+          <div class="stat-value">$${totalPortfolio.toLocaleString()}</div>
+          <div class="stat-change up">
+            ▲ ${dayPct.toFixed(2)}% Today
+          </div>
+        </div>
+      `;
+    }
+    
+    // ==================== RENDER WATCHLIST ====================
+    function renderWatchlist() {
+      document.getElementById('watchlistBody').innerHTML = cryptoData.map(coin => {
+        const isUp = coin.price_change_percentage_24h >= 0;
+        const sparkData = coin.sparkline_in_7d?.price || [];
+        const sparkColor = isUp ? '#00d4aa' : '#ff4757';
+        
+        return `
+          <tr>
+            <td>
+              <div class="symbol-cell">${coin.symbol}</div>
+              <div class="symbol-name">${coin.name}</div>
+            </td>
+            <td>$${coin.current_price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 6})}</td>
+            <td class="${isUp ? 'up' : 'down'}">
+              ${isUp ? '+' : ''}$${Math.abs(coin.price_change_24h).toFixed(2)}
+            </td>
+            <td>
+              <span class="${isUp ? 'badge-up' : 'badge-down'}">
+                ${isUp ? '▲' : '▼'} ${Math.abs(coin.price_change_percentage_24h).toFixed(2)}%
+              </span>
+            </td>
+            <td style="color: var(--muted)">
+              $${(coin.market_cap / 1e9).toFixed(1)}B
+            </td>
+            <td>
+              ${sparklineSVG(sparkData.slice(-24), sparkColor)}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+    
+    // ==================== RENDER TICKER ====================
+    function renderTicker() {
+      const doubled = [...cryptoData, ...cryptoData];
+      document.getElementById('tickerTrack').innerHTML = doubled.map(coin => {
+        const isUp = coin.price_change_percentage_24h >= 0;
+        return `
+          <div class="ticker-item">
+            <span class="ticker-symbol">${coin.symbol}</span>
+            <span class="ticker-price">$${coin.current_price.toLocaleString(undefined, {maximumFractionDigits: 2})}</span>
+            <span class="ticker-change ${isUp ? 'up' : 'down'}">
+              ${isUp ? '▲' : '▼'}${Math.abs(coin.price_change_percentage_24h).toFixed(2)}%
+            </span>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    // ==================== GENERATE CHART DATA ====================
+    function generateChartData(period) {
+      const btc = cryptoData.find(c => c.id === 'bitcoin');
+      const basePrice = btc.current_price;
+      
+      const configs = {
+        '1D': { points: 24, labels: i => `${i}:00` },
+        '1W': { points: 7, labels: i => ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i] },
+        '1M': { points: 30, labels: i => `${i+1}` },
+        '3M': { points: 12, labels: i => ['Week '+(i+1)] }
+      };
+      
+      const config = configs[period];
+      const labels = Array.from({length: config.points}, (_, i) => config.labels(i));
+      const data = Array.from({length: config.points}, (_, i) => {
+        const trend = (i / config.points) * basePrice * 0.05;
+        const noise = (Math.random() - 0.5) * basePrice * 0.02;
+        return basePrice - (basePrice * 0.03) + trend + noise;
+      });
+      
+      return { labels, data };
+    }
+    
+    // ==================== BUILD PRICE CHART ====================
+    function buildPriceChart(period = '1D') {
+      if (priceChart) priceChart.destroy();
+      
+      const { labels, data } = generateChartData(period);
+      const ctx = document.getElementById('priceChart').getContext('2d');
+      
+      priceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'BTC/USD',
+            data,
+            borderColor: '#00d4aa',
+            backgroundColor: makeGradient(ctx, '0,212,170'),
+            borderWidth: 2,
+            tension: 0.4,
+            fill: true,
+            pointRadius: 0,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#00d4aa',
+            pointHoverBorderColor: '#fff',
+            pointHoverBorderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(20,30,48,0.95)',
+              titleColor: '#e8edf5',
+              bodyColor: '#6b7a99',
+              borderColor: 'rgba(255,255,255,0.1)',
+              borderWidth: 1,
+              padding: 12,
+              displayColors: false,
+              callbacks: {
+                title: ctx => labels[ctx[0].dataIndex],
+                label: ctx => ` $${ctx.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                color: 'rgba(255,255,255,0.04)',
+                drawBorder: false
+              },
+              ticks: {
+                maxRotation: 0,
+                autoSkipPadding: 20
+              }
+            },
+            y: {
+              grid: {
+                color: 'rgba(255,255,255,0.04)',
+                drawBorder: false
+              },
+              ticks: {
+                callback: v => '$' + (v/1000).toFixed(0) + 'K'
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // ==================== BUILD ALLOCATION CHART ====================
+    function buildAllocationChart() {
+      const ctx = document.getElementById('allocationChart').getContext('2d');
+      
+      allocationChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Bitcoin', 'Ethereum', 'Solana', 'Others'],
+          datasets: [{
+            data: [42, 28, 18, 12],
+            backgroundColor: ['#00d4aa', '#0095ff', '#f5c842', '#2a3550'],
+            borderColor: '#141e30',
+            borderWidth: 4,
+            hoverOffset: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '75%',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(20,30,48,0.95)',
+              titleColor: '#e8edf5',
+              bodyColor: '#6b7a99',
+              borderColor: 'rgba(255,255,255,0.1)',
+              borderWidth: 1,
+              padding: 12,
+              callbacks: {
+                label: ctx => ` ${ctx.label}: ${ctx.parsed}%`
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // ==================== PERIOD SWITCHER ====================
+    function switchPeriod(btn, period) {
+      document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      buildPriceChart(period);
+    }
+    
+    // ==================== INIT & AUTO-REFRESH ====================
+    async function init() {
+      await loadCryptoData();
+      renderHeroStats();
+      renderWatchlist();
+      renderTicker();
+      buildPriceChart('1D');
+      buildAllocationChart();
+    }
+    
+    // Auto-refresh every 10 seconds
+    setInterval(async () => {
+      await loadCryptoData();
+      renderHeroStats();
+      renderWatchlist();
+      renderTicker();
+    }, 10000);
+    
+    // Initialize on load
+    init();
+  </script>
+</body>
+</html>

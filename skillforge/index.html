@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>skillforge-ai — AI skill files for Claude, GPT, Gemini</title>
+<meta name="description" content="Reusable AI skill files — prompt playbooks for Claude, GPT-4, Gemini and any LLM. Generate production-quality code consistently. npm install -g skillforge-ai">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#070a0f;--surface:#0d1117;--surface2:#161b22;--surface3:#1c2333;
+  --border:#21262d;--border2:#30363d;
+  --accent:#00d4aa;--accent2:#7c3aed;--accent3:#f59e0b;
+  --text:#e6edf3;--muted:#8b949e;--muted2:#6e7681;
+  --green:#3fb950;--red:#f85149;--blue:#58a6ff;
+  --radius:8px;--radius-lg:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,170,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,170,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0;}
+.mono{font-family:'DM Mono',monospace;}
+.z1{position:relative;z-index:1;}
+a{color:var(--accent);text-decoration:none;}
+a:hover{text-decoration:underline;}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(7,10,15,0.95);backdrop-filter:blur(12px);border-bottom:0.5px solid var(--border);padding:0 32px;height:52px;display:flex;align-items:center;justify-content:space-between;}
+.nav-logo{font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);display:flex;align-items:center;gap:8px;}
+.nav-logo .sep{color:var(--muted);}
+.nav-links{display:flex;align-items:center;gap:16px;}
+.nav-links a{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-decoration:none;transition:color .2s;}
+.nav-links a:hover{color:var(--text);}
+.nav-npm{font-family:'DM Mono',monospace;font-size:11px;background:rgba(0,212,170,0.1);color:var(--accent);border:0.5px solid rgba(0,212,170,0.25);border-radius:4px;padding:4px 12px;transition:all .2s;}
+.nav-npm:hover{background:rgba(0,212,170,0.2);text-decoration:none;}
+
+/* HERO */
+.hero{padding:80px 32px 64px;max-width:900px;margin:0 auto;text-align:center;position:relative;z-index:1;}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);background:rgba(0,212,170,0.08);border:0.5px solid rgba(0,212,170,0.2);border-radius:20px;padding:4px 14px;margin-bottom:24px;letter-spacing:0.05em;}
+.hero-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.hero h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;line-height:1.05;margin-bottom:20px;}
+.hero h1 em{font-style:normal;color:var(--accent);}
+.hero h1 .dim{color:var(--muted);}
+.hero-sub{font-family:'DM Mono',monospace;font-size:14px;color:var(--muted);max-width:560px;margin:0 auto 36px;line-height:1.8;}
+.install-box{display:inline-flex;align-items:center;gap:0;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:32px;}
+.install-cmd{font-family:'DM Mono',monospace;font-size:14px;color:var(--text);padding:12px 20px;letter-spacing:0.02em;}
+.install-cmd .prefix{color:var(--muted);}
+.install-copy{background:var(--surface2);border:none;border-left:0.5px solid var(--border);padding:12px 16px;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace;font-size:12px;transition:all .2s;}
+.install-copy:hover{background:var(--surface3);color:var(--accent);}
+.hero-badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+.hbadge{font-family:'DM Mono',monospace;font-size:11px;padding:4px 12px;border-radius:4px;border:0.5px solid var(--border);color:var(--muted);}
+.hbadge.green{border-color:rgba(63,185,80,0.3);color:var(--green);background:rgba(63,185,80,0.06);}
+.hbadge.blue{border-color:rgba(88,166,255,0.3);color:var(--blue);background:rgba(88,166,255,0.06);}
+.hbadge.amber{border-color:rgba(240,136,62,0.3);color:var(--accent3);background:rgba(240,136,62,0.06);}
+.hbadge.teal{border-color:rgba(0,212,170,0.3);color:var(--accent);background:rgba(0,212,170,0.06);}
+
+/* SECTIONS */
+.section{padding:64px 32px;max-width:1000px;margin:0 auto;position:relative;z-index:1;}
+.section-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;}
+.section-title{font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;line-height:1.2;margin-bottom:12px;}
+.section-sub{font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);line-height:1.7;max-width:560px;}
+.divider{border:none;border-top:0.5px solid var(--border);margin:0;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;}
+.card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:20px;}
+.card.accent-border{border-color:rgba(0,212,170,0.3);}
+
+/* TERMINAL */
+.terminal{background:#010409;border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;font-family:'DM Mono',monospace;}
+.term-bar{background:var(--surface);padding:10px 16px;display:flex;align-items:center;gap:6px;border-bottom:0.5px solid var(--border);}
+.term-dot{width:10px;height:10px;border-radius:50%;}
+.term-title{font-size:11px;color:var(--muted);margin-left:auto;margin-right:auto;}
+.term-body{padding:20px;font-size:12px;line-height:2;}
+.term-line{display:flex;gap:0;align-items:flex-start;}
+.term-prompt{color:var(--accent);margin-right:8px;flex-shrink:0;}
+.term-cmd{color:var(--text);}
+.term-out{color:var(--muted);padding-left:0;}
+.term-comment{color:var(--muted2);}
+.term-green{color:var(--green);}
+.term-blue{color:var(--blue);}
+.term-amber{color:var(--accent3);}
+.term-teal{color:var(--accent);}
+.term-blank{height:10px;}
+
+/* SKILL EXPLORER */
+.skill-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+.skill-tab{font-family:'DM Mono',monospace;font-size:12px;padding:7px 16px;border-radius:6px;border:0.5px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .2s;}
+.skill-tab.active{border-color:var(--accent);background:rgba(0,212,170,0.08);color:var(--accent);}
+.skill-tab:hover:not(.active){border-color:var(--border2);color:var(--text);}
+.skill-content{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.skill-content-header{padding:14px 20px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.skill-content-title{font-size:14px;font-weight:600;color:var(--text);}
+.skill-content-meta{display:flex;gap:6px;}
+.skill-meta-tag{font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;border-radius:3px;background:var(--surface2);border:0.5px solid var(--border);color:var(--muted);}
+.skill-content-body{padding:20px;max-height:320px;overflow-y:auto;}
+.skill-content-body::-webkit-scrollbar{width:4px;}
+.skill-content-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.skill-rule{display:flex;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);line-height:1.6;}
+.skill-rule:last-child{border-bottom:none;}
+.skill-rule::before{content:'+';color:var(--green);flex-shrink:0;margin-top:1px;}
+.skill-rule.header-rule{color:var(--text);font-weight:500;}
+.skill-rule.header-rule::before{content:'#';color:var(--accent);}
+.skill-stat-row{display:flex;gap:12px;padding:10px 20px;background:var(--surface2);border-top:0.5px solid var(--border);}
+.skill-stat{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+.skill-stat span{color:var(--accent);}
+
+/* HOW IT WORKS */
+.how-steps{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;gap:0;align-items:center;margin-top:32px;}
+.how-step{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:20px;text-align:center;}
+.how-step:hover{border-color:rgba(0,212,170,0.3);}
+.how-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);margin-bottom:8px;}
+.how-icon{font-size:28px;margin-bottom:8px;display:block;}
+.how-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.how-desc{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.6;}
+.how-arrow{font-size:20px;color:var(--border2);text-align:center;padding:0 8px;}
+
+/* AUDIENCE CARDS */
+.aud-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:22px;transition:all .2s;}
+.aud-card:hover{border-color:rgba(0,212,170,0.3);transform:translateY(-2px);}
+.aud-icon{font-size:28px;margin-bottom:12px;display:block;}
+.aud-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.aud-desc{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:14px;}
+.aud-code{background:var(--bg);border:0.5px solid var(--border);border-radius:6px;padding:10px 12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;}
+.aud-code .cmd{color:var(--text);}
+.aud-code .out{color:var(--muted);}
+.aud-code .acc{color:var(--accent);}
+
+/* COMMANDS TABLE */
+.cmd-table{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:12px;}
+.cmd-table th{text-align:left;padding:8px 12px;border-bottom:0.5px solid var(--border);color:var(--muted);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;font-weight:400;}
+.cmd-table td{padding:10px 12px;border-bottom:0.5px solid var(--border);vertical-align:top;}
+.cmd-table tr:last-child td{border-bottom:none;}
+.cmd-table tr:hover td{background:var(--surface2);}
+.cmd-name{color:var(--text);}
+.cmd-desc{color:var(--muted);line-height:1.6;}
+.cmd-badge{font-size:9px;padding:1px 5px;border-radius:2px;margin-left:4px;}
+.badge-new{background:rgba(0,212,170,0.15);color:var(--accent);}
+.badge-v2{background:rgba(124,58,237,0.15);color:#a78bfa;}
+
+/* BEFORE/AFTER */
+.ba-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:24px;}
+.ba-col{border-radius:var(--radius-lg);overflow:hidden;border:0.5px solid var(--border);}
+.ba-header{padding:10px 14px;display:flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:11px;}
+.ba-header.before{background:rgba(248,81,73,0.1);border-bottom:0.5px solid rgba(248,81,73,0.2);color:var(--red);}
+.ba-header.after{background:rgba(63,185,80,0.1);border-bottom:0.5px solid rgba(63,185,80,0.2);color:var(--green);}
+.ba-body{padding:14px;background:var(--surface);font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;}
+.ba-body .pos{color:var(--green);}
+.ba-body .neg{color:var(--red);}
+
+/* ROADMAP */
+.roadmap{display:flex;gap:0;margin-top:28px;}
+.rm-item{flex:1;padding:16px 18px;border:0.5px solid var(--border);position:relative;}
+.rm-item:first-child{border-radius:var(--radius-lg) 0 0 var(--radius-lg);}
+.rm-item:last-child{border-radius:0 var(--radius-lg) var(--radius-lg) 0;}
+.rm-item+.rm-item{border-left:none;}
+.rm-item.current{background:rgba(0,212,170,0.05);border-color:rgba(0,212,170,0.3);}
+.rm-version{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.rm-dot{width:6px;height:6px;border-radius:50%;background:var(--border2);}
+.rm-dot.live{background:var(--accent);animation:pulse 2s infinite;}
+.rm-dot.planned{background:var(--accent2);}
+.rm-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.rm-items{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.9;}
+
+/* SERVICES */
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:24px;}
+.svc-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;transition:all .2s;}
+.svc-card:hover{border-color:rgba(0,212,170,0.3);transform:translateY(-1px);}
+.svc-icon{font-size:22px;margin-bottom:8px;display:block;}
+.svc-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;}
+.svc-desc{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.6;}
+
+/* CTA */
+.cta-section{background:linear-gradient(135deg,rgba(0,212,170,0.06),rgba(124,58,237,0.06));border:0.5px solid rgba(0,212,170,0.2);border-radius:var(--radius-lg);padding:48px;text-align:center;margin:64px 32px;position:relative;z-index:1;}
+.cta-title{font-size:clamp(1.5rem,3vw,2rem);font-weight:700;margin-bottom:12px;}
+.cta-sub{font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);margin-bottom:28px;line-height:1.7;}
+.cta-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.cta-btn{font-family:'Syne',sans-serif;font-weight:600;font-size:14px;padding:12px 28px;border-radius:var(--radius);cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;}
+.cta-btn.primary{background:var(--accent);color:#000;border:none;}
+.cta-btn.primary:hover{background:#00bfa0;transform:translateY(-1px);}
+.cta-btn.secondary{background:transparent;color:var(--text);border:0.5px solid var(--border);}
+.cta-btn.secondary:hover{border-color:var(--accent);color:var(--accent);}
+.cta-btn.contact{background:rgba(124,58,237,0.1);color:#a78bfa;border:0.5px solid rgba(124,58,237,0.3);}
+.cta-btn.contact:hover{background:rgba(124,58,237,0.2);}
+
+/* FOOTER */
+footer{text-align:center;padding:32px;border-top:0.5px solid var(--border);font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);position:relative;z-index:1;line-height:2;}
+footer a{color:var(--accent);text-decoration:none;}
+
+@media(max-width:768px){
+  .how-steps{grid-template-columns:1fr;} .how-arrow{display:none;}
+  .grid2,.grid3,.grid4,.ba-grid{grid-template-columns:1fr;}
+  .roadmap{flex-direction:column;} .rm-item+.rm-item{border-left:0.5px solid var(--border);border-top:none;}
+  .rm-item:first-child{border-radius:var(--radius-lg) var(--radius-lg) 0 0;}
+  .rm-item:last-child{border-radius:0 0 var(--radius-lg) var(--radius-lg);}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">skillforge-ai <span class="sep">/</span> <span style="color:var(--muted)">npm package</span></div>
+  <div class="nav-links">
+    <a href="#skills">Skills</a>
+    <a href="#how">How it works</a>
+    <a href="#commands">Commands</a>
+    <a href="#use-cases">Use cases</a>
+    <a href="#services">Services</a>
+    <a href="../">zero-code-apps</a>
+    <a href="../builder/">Try builder →</a>
+    <a href="https://www.npmjs.com/package/skillforge-ai" target="_blank" class="nav-npm">npm ↗</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero z1">
+  <div class="hero-badge">v1.1.0 · 5 skills · any LLM</div>
+  <h1>The prompt layer that makes<br/><em>AI consistent</em></h1>
+  <p class="hero-sub">
+    Reusable skill files that teach Claude, GPT-4, and Gemini your exact design system, component patterns, and API integrations. Same input → same quality. Every time.
+  </p>
+  <div class="install-box">
+    <div class="install-cmd"><span class="prefix">$ </span>npm install -g skillforge-ai</div>
+    <button class="install-copy" onclick="copyInstall(this)">copy</button>
+  </div>
+  <div class="hero-badges">
+    <span class="hbadge green">✓ 5 built-in skills</span>
+    <span class="hbadge teal">Claude · GPT-4 · Gemini</span>
+    <span class="hbadge blue">GitHub Copilot · Claude Code</span>
+    <span class="hbadge amber">MIT · free forever</span>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- HOW IT WORKS -->
+<div class="section" id="how">
+  <div class="section-label">How it works</div>
+  <div class="section-title">Skills guide AI.<br/>You build faster.</div>
+  <p class="section-sub">Without skillforge-ai, every AI generation is a gamble. With skills loaded, the AI follows your exact rules — design, components, APIs — every single time.</p>
+
+  <div class="how-steps" style="margin-top:32px;">
+    <div class="how-step">
+      <div class="how-num">01</div>
+      <span class="how-icon">📦</span>
+      <div class="how-title">Install</div>
+      <div class="how-desc">npm install -g skillforge-ai</div>
+    </div>
+    <div class="how-arrow">→</div>
+    <div class="how-step">
+      <div class="how-num">02</div>
+      <span class="how-icon">🎯</span>
+      <div class="how-title">Pick skills</div>
+      <div class="how-desc">Choose from 5 built-in skills or write your own</div>
+    </div>
+    <div class="how-arrow">→</div>
+    <div class="how-step">
+      <div class="how-num">03</div>
+      <span class="how-icon">⚡</span>
+      <div class="how-title">Run</div>
+      <div class="how-desc">skillforge-ai run skills --task "..."</div>
+    </div>
+    <div class="how-arrow">→</div>
+    <div class="how-step">
+      <div class="how-num">04</div>
+      <span class="how-icon">🚀</span>
+      <div class="how-title">Ship</div>
+      <div class="how-desc">Production-quality output. No revision loops.</div>
+    </div>
+  </div>
+
+  <!-- Before / After -->
+  <div class="ba-grid" style="margin-top:32px;">
+    <div class="ba-col">
+      <div class="ba-header before">❌ Without skillforge-ai</div>
+      <div class="ba-body">
+        <div class="neg">You: "Build a fintech dashboard"</div>
+        <br>
+        AI uses Arial font<br>
+        AI picks random colours<br>
+        AI skips Chart.js dark theme<br>
+        AI ignores CoinGecko API<br>
+        No sparklines, no ticker<br>
+        Looks nothing like your brand<br>
+        3 revision rounds needed<br>
+      </div>
+    </div>
+    <div class="ba-col">
+      <div class="ba-header after">✅ With skillforge-ai skills</div>
+      <div class="ba-body">
+        <div class="pos">You: "Build a fintech dashboard"</div>
+        <br>
+        <span class="pos">Syne + DM Mono fonts loaded</span><br>
+        <span class="pos">bg #080c12 · accent #00d4aa</span><br>
+        <span class="pos">Chart.js dark theme applied</span><br>
+        <span class="pos">CoinGecko API integrated</span><br>
+        <span class="pos">SVG sparklines + ticker bar</span><br>
+        <span class="pos">Matches your design system</span><br>
+        <span class="pos">Ships on first generation</span><br>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SKILL EXPLORER -->
+<div class="section" id="skills">
+  <div class="section-label">Skill explorer</div>
+  <div class="section-title">5 built-in skills.</div>
+  <p class="section-sub">Click any skill to see exactly what gets added to the AI's context — and why the output is better.</p>
+
+  <div class="skill-tabs" style="margin-top:28px;" id="skill-tabs">
+    <button class="skill-tab active" onclick="showSkill('frontend-design',this)">✦ frontend-design</button>
+    <button class="skill-tab" onclick="showSkill('chart-js',this)">📊 chart-js</button>
+    <button class="skill-tab" onclick="showSkill('fintech-ui',this)">💹 fintech-ui</button>
+    <button class="skill-tab" onclick="showSkill('api-integration',this)">🔌 api-integration</button>
+    <button class="skill-tab" onclick="showSkill('zca-schema',this)">⚙️ zca-schema</button>
+  </div>
+
+  <div class="skill-content" id="skill-content">
+    <div class="skill-content-header">
+      <div class="skill-content-title" id="sc-title">frontend-design</div>
+      <div class="skill-content-meta" id="sc-meta"></div>
+    </div>
+    <div class="skill-content-body" id="sc-body">
+      <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);">Loading skill content...</div>
+    </div>
+    <div class="skill-stat-row" id="sc-stats">
+      <div class="skill-stat">chars: <span id="sc-chars">—</span></div>
+      <div class="skill-stat">lines: <span id="sc-lines">—</span></div>
+      <div class="skill-stat">category: <span id="sc-cat">—</span></div>
+      <div class="skill-stat">works with: <span id="sc-llm">any LLM</span></div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- TERMINAL DEMO -->
+<div class="section" id="commands">
+  <div class="section-label">Live CLI demo</div>
+  <div class="section-title">Every command you need.</div>
+
+  <div class="terminal" style="margin-top:28px;">
+    <div class="term-bar">
+      <div class="term-dot" style="background:#f85149;"></div>
+      <div class="term-dot" style="background:#f0883e;"></div>
+      <div class="term-dot" style="background:#3fb950;"></div>
+      <div class="term-title mono">terminal — skillforge-ai v1.1.0</div>
+    </div>
+    <div class="term-body" id="term-body">
+      <div class="term-line"><span class="term-comment"># List all available skills</span></div>
+      <div class="term-line"><span class="term-prompt">$</span><span class="term-cmd">skillforge-ai list</span></div>
+      <div class="term-blank"></div>
+      <div class="term-line"><span class="term-out">  skillforge-ai  <span class="term-teal">v1.1.0</span></span></div>
+      <div class="term-line"><span class="term-out">  AI skill files · Claude · GPT · Gemini · Copilot · any LLM</span></div>
+      <div class="term-blank"></div>
+      <div class="term-line"><span class="term-out">  Skills <span class="term-amber">(5 available)</span></span></div>
+      <div class="term-blank"></div>
+      <div class="term-line"><span class="term-out">  ◆ <span class="term-teal">frontend-design</span>         v1.0 [any LLM]  UI / Visual</span></div>
+      <div class="term-line"><span class="term-out">  ◆ <span class="term-teal">chart-js</span>                v1.0 [any LLM]  Data Visualization</span></div>
+      <div class="term-line"><span class="term-out">  ◆ <span class="term-teal">fintech-ui</span>              v1.0 [any LLM]  UI Components</span></div>
+      <div class="term-line"><span class="term-out">  ◆ <span class="term-teal">api-integration</span>         v1.0 [any LLM]  Data / APIs</span></div>
+      <div class="term-line"><span class="term-out">  ◆ <span class="term-teal">zca-schema</span>              v1.0 [any LLM]  Platform / Schema</span></div>
+      <div class="term-blank"></div>
+      <div class="term-line"><span class="term-comment"># Build a crypto dashboard — saved to file</span></div>
+      <div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> skillforge-ai run frontend-design chart-js fintech-ui api-integration \</span></div>
+      <div class="term-line"><span class="term-cmd">&nbsp;&nbsp;--task "dark crypto trading dashboard BTC ETH SOL" \</span></div>
+      <div class="term-line"><span class="term-cmd">&nbsp;&nbsp;--output demos/crypto/index.html</span></div>
+      <div class="term-blank"></div>
+      <div class="term-line"><span class="term-out">  <span class="term-green">✓</span> Skills loaded: frontend-design chart-js fintech-ui api-integration</span></div>
+      <div class="term-line"><span class="term-out">  <span class="term-green">✓</span> Calling Claude claude-sonnet-4-6...</span></div>
+      <div class="term-line"><span class="term-out">  <span class="term-teal">▸</span> Streaming... <span class="term-amber">4,821</span> tokens</span></div>
+      <div class="term-line"><span class="term-out">  <span class="term-green">✓</span> demos/crypto/index.html</span></div>
+      <div class="term-line"><span class="term-out">  <span class="term-muted" style="color:var(--muted)">    847 lines · 0 written by hand</span></span></div>
+      <div class="term-blank"></div>
+      <div class="term-line"><span class="term-out">  Build more at: <span class="term-teal">https://kirti.github.io/zero-code-apps/builder</span></span></div>
+      <div class="term-blank"></div>
+      <div class="term-line"><span class="term-comment"># Generate GitHub Copilot instructions</span></div>
+      <div class="term-line"><span class="term-prompt">$</span><span class="term-cmd"> skillforge-ai copilot-instructions frontend-design chart-js</span></div>
+      <div class="term-blank"></div>
+      <div class="term-line"><span class="term-out">  <span class="term-green">✓</span> .github/copilot-instructions.md written</span></div>
+      <div class="term-line"><span class="term-out">  <span class="term-muted" style="color:var(--muted)">    Copilot will follow these rules for every file in your workspace</span></span></div>
+    </div>
+  </div>
+
+  <!-- Commands table -->
+  <div class="card" style="margin-top:20px;padding:0;overflow:hidden;">
+    <table class="cmd-table">
+      <thead><tr><th>Command</th><th>What it does</th><th>v</th></tr></thead>
+      <tbody>
+        <tr><td class="cmd-name">skillforge-ai list</td><td class="cmd-desc">Browse all available skills with metadata</td><td><span class="mono" style="font-size:10px;color:var(--muted);">v1</span></td></tr>
+        <tr><td class="cmd-name">skillforge-ai info &lt;skill&gt;</td><td class="cmd-desc">Full skill details — version, category, rules, examples</td><td><span class="mono" style="font-size:10px;color:var(--muted);">v1</span></td></tr>
+        <tr><td class="cmd-name">skillforge-ai show &lt;skill&gt;</td><td class="cmd-desc">Print raw skill content to stdout</td><td><span class="mono" style="font-size:10px;color:var(--muted);">v1</span></td></tr>
+        <tr><td class="cmd-name">skillforge-ai copy &lt;skill&gt;</td><td class="cmd-desc">Copy skill to clipboard → paste into any AI</td><td><span class="mono" style="font-size:10px;color:var(--muted);">v1</span></td></tr>
+        <tr><td class="cmd-name">skillforge-ai combine &lt;skills...&gt;</td><td class="cmd-desc">Merge multiple skills → clipboard</td><td><span class="mono" style="font-size:10px;color:var(--muted);">v1</span></td></tr>
+        <tr><td class="cmd-name">skillforge-ai prompt &lt;skills...&gt; --task "..."</td><td class="cmd-desc">Build full prompt with skills + task → clipboard</td><td><span class="mono" style="font-size:10px;color:var(--muted);">v1</span></td></tr>
+        <tr><td class="cmd-name">skillforge-ai run &lt;skills...&gt; --task "..."</td><td class="cmd-desc">Call Claude API directly → save output to file<span class="cmd-badge badge-new">NEW</span></td><td><span class="mono" style="font-size:10px;color:var(--muted);">v1.1</span></td></tr>
+        <tr><td class="cmd-name">skillforge-ai lock</td><td class="cmd-desc">Pin skill versions to SKILL.lock for reproducibility</td><td><span class="mono" style="font-size:10px;color:var(--muted);">v1</span></td></tr>
+        <tr><td class="cmd-name">skillforge-ai verify</td><td class="cmd-desc">Validate skills against lock file</td><td><span class="mono" style="font-size:10px;color:var(--muted);">v1</span></td></tr>
+        <tr><td class="cmd-name">skillforge-ai copilot-instructions</td><td class="cmd-desc">Generate .github/copilot-instructions.md from skills</td><td><span class="mono" style="font-size:10px;color:var(--muted);">v1</span></td></tr>
+        <tr><td class="cmd-name">skillforge-ai add &lt;skill&gt;<span class="cmd-badge badge-v2">v2</span></td><td class="cmd-desc">Install skill from community registry</td><td><span class="mono" style="font-size:10px;color:var(--accent2);">v2</span></td></tr>
+        <tr><td class="cmd-name">skillforge-ai publish &lt;skill&gt;<span class="cmd-badge badge-v2">v2</span></td><td class="cmd-desc">Share your skill with the community</td><td><span class="mono" style="font-size:10px;color:var(--accent2);">v2</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- USE CASES -->
+<div class="section" id="use-cases">
+  <div class="section-label">Use cases</div>
+  <div class="section-title">Built for every AI workflow.</div>
+  <div class="grid4" style="margin-top:28px;">
+    <div class="aud-card">
+      <span class="aud-icon">👩‍💻</span>
+      <div class="aud-title">Solo developers</div>
+      <div class="aud-desc">Stop re-explaining your stack to AI. Write the skill once, reuse across every project.</div>
+      <div class="aud-code">
+        <div class="cmd">skillforge-ai copy frontend-design</div>
+        <div class="out"># paste into claude.ai or ChatGPT</div>
+        <div class="acc"># AI follows your design system</div>
+      </div>
+    </div>
+    <div class="aud-card">
+      <span class="aud-icon">👥</span>
+      <div class="aud-title">Engineering teams</div>
+      <div class="aud-desc">Codify your design system into skills. Every engineer gets consistent AI output. No more "it looked different on my machine."</div>
+      <div class="aud-code">
+        <div class="cmd">skillforge-ai lock</div>
+        <div class="acc"># SKILL.lock pins versions</div>
+        <div class="out"># reproducible across team</div>
+      </div>
+    </div>
+    <div class="aud-card">
+      <span class="aud-icon">🤖</span>
+      <div class="aud-title">GitHub Copilot users</div>
+      <div class="aud-desc">Generate a copilot-instructions.md from your skills. Copilot reads it for every file in your workspace — automatically.</div>
+      <div class="aud-code">
+        <div class="cmd">skillforge-ai copilot-instructions \</div>
+        <div class="cmd">&nbsp;&nbsp;frontend-design chart-js</div>
+        <div class="acc"># → .github/copilot-instructions.md</div>
+      </div>
+    </div>
+    <div class="aud-card">
+      <span class="aud-icon">🔧</span>
+      <div class="aud-title">Claude Code users</div>
+      <div class="aud-desc">Pipe skills into your CLAUDE.md for persistent context across every session. Your rules follow you everywhere.</div>
+      <div class="aud-code">
+        <div class="cmd">skillforge-ai show frontend-design \</div>
+        <div class="cmd">&nbsp;&nbsp;&gt;&gt; CLAUDE.md</div>
+        <div class="acc"># persistent across all sessions</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ROADMAP -->
+<div class="section">
+  <div class="section-label">Roadmap</div>
+  <div class="section-title">What's coming.</div>
+  <div class="roadmap" style="margin-top:24px;">
+    <div class="rm-item current">
+      <div class="rm-version"><div class="rm-dot live"></div>v1.1 · current</div>
+      <div class="rm-title">Core package</div>
+      <div class="rm-items">5 built-in skills<br/>CLI: list copy run lock<br/>Claude API integration<br/>Copilot instructions<br/>npm published</div>
+    </div>
+    <div class="rm-item">
+      <div class="rm-version"><div class="rm-dot planned"></div>v2.0 · next</div>
+      <div class="rm-title">Registry</div>
+      <div class="rm-items">Community skills<br/>skillforge-ai add react<br/>skillforge-ai publish<br/>Search registry<br/>Skill versioning</div>
+    </div>
+    <div class="rm-item">
+      <div class="rm-version"><div class="rm-dot" style="background:var(--blue);"></div>v3.0</div>
+      <div class="rm-title">IDE integration</div>
+      <div class="rm-items">VS Code extension<br/>MCP server<br/>Claude Desktop<br/>JetBrains plugin<br/>Auto-inject on save</div>
+    </div>
+    <div class="rm-item">
+      <div class="rm-version"><div class="rm-dot" style="background:var(--accent3);"></div>v4.0</div>
+      <div class="rm-title">AI-generated skills</div>
+      <div class="rm-items">Scan codebase → skill<br/>Learn your patterns<br/>Team skill sharing<br/>Org-level management<br/>Custom LLM fine-tune</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SERVICES -->
+<div class="section" id="services">
+  <div class="section-label">Go further</div>
+  <div class="section-title">From prototype to production.</div>
+  <p class="section-sub">skillforge-ai generates the UI. We help you wire up the real thing — APIs, payments, auth, and full deployment.</p>
+
+  <div class="svc-grid">
+    <div class="svc-card">
+      <span class="svc-icon">💳</span>
+      <div class="svc-title">Payment integration</div>
+      <div class="svc-desc">Stripe, PayPal, Razorpay wired to your generated checkout UI. Full cart to payment flow.</div>
+    </div>
+    <div class="svc-card">
+      <span class="svc-icon">📈</span>
+      <div class="svc-title">Live trading APIs</div>
+      <div class="svc-desc">Alpaca, Coinbase, Binance, Interactive Brokers. Real market data for your trading dashboard.</div>
+    </div>
+    <div class="svc-card">
+      <span class="svc-icon">🔐</span>
+      <div class="svc-title">Authentication</div>
+      <div class="svc-desc">Auth0, Supabase, Firebase auth added to any generated app. Login, roles, sessions.</div>
+    </div>
+    <div class="svc-card">
+      <span class="svc-icon">🌐</span>
+      <div class="svc-title">Static site deployment</div>
+      <div class="svc-desc">Full deployable site with routing, SEO, assets. One-click to Vercel, Netlify, or GitHub Pages.</div>
+    </div>
+    <div class="svc-card">
+      <span class="svc-icon">🎨</span>
+      <div class="svc-title">Custom skills</div>
+      <div class="svc-desc">We write skill files for your design system. Your brand, codified. Consistent AI output forever.</div>
+    </div>
+    <div class="svc-card">
+      <span class="svc-icon">🏗️</span>
+      <div class="svc-title">Full production build</div>
+      <div class="svc-desc">Take any prototype to production. Backend, database, hosting. End-to-end delivery.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-section">
+  <div class="cta-title">Start building in 30 seconds</div>
+  <p class="cta-sub">Install the package, pick your skills, describe what you want.<br/>Let AI do the rest — with your exact standards.</p>
+  <div class="cta-buttons">
+    <a href="https://www.npmjs.com/package/skillforge-ai" target="_blank" class="cta-btn primary">↓ npm install</a>
+    <a href="../builder/" class="cta-btn secondary">Try live builder →</a>
+    <a href="mailto:kirtikau@gmail.com" class="cta-btn contact">✉ Get in touch</a>
+  </div>
+</div>
+
+<footer>
+  <div>skillforge-ai · built by <a href="https://www.linkedin.com/in/kirti3/" target="_blank">Kirti Kaushal</a> · Senior AI/ML + Full Stack Engineer</div>
+  <div style="margin-top:4px;">
+    <a href="https://www.npmjs.com/package/skillforge-ai" target="_blank">npm</a> ·
+    <a href="https://github.com/kirti/zero-code-apps" target="_blank">github</a> ·
+    <a href="https://kirtikau.medium.com" target="_blank">medium</a> ·
+    <a href="https://www.linkedin.com/in/kirti3/" target="_blank">linkedin</a> ·
+    <a href="../">zero-code-apps</a>
+  </div>
+</footer>
+
+<script src="../builder/skills.js"></script>
+<script>
+// ── Skill metadata ────────────────────────────────────────────────
+const SKILL_META = {
+  'frontend-design': { title:'frontend-design', icon:'✦', category:'UI / Visual', llm:'HTML/CSS/JS · React', color:'var(--accent)' },
+  'chart-js':        { title:'chart-js',         icon:'📊', category:'Data Visualization', llm:'any LLM', color:'var(--blue)' },
+  'fintech-ui':      { title:'fintech-ui',        icon:'💹', category:'UI Components', llm:'any LLM', color:'var(--accent3)' },
+  'api-integration': { title:'api-integration',   icon:'🔌', category:'Data / APIs', llm:'any LLM', color:'var(--green)' },
+  'zca-schema':      { title:'zca-schema',        icon:'⚙️', category:'Platform / Schema', llm:'any LLM', color:'#a78bfa' },
+};
+
+// ── Show skill content ────────────────────────────────────────────
+function showSkill(name, tab) {
+  document.querySelectorAll('.skill-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  const meta = SKILL_META[name];
+  const content = window.SKILL_CONTENTS?.[name] || '';
+  document.getElementById('sc-title').textContent = meta.icon + ' ' + meta.title;
+  document.getElementById('sc-chars').textContent = content.length.toLocaleString();
+  document.getElementById('sc-lines').textContent = content.split('\n').length.toLocaleString();
+  document.getElementById('sc-cat').textContent = meta.category;
+  document.getElementById('sc-llm').textContent = meta.llm;
+
+  // Render content as formatted rules
+  const body = document.getElementById('sc-body');
+  if(!content) { body.innerHTML = '<div style="font-family:\'DM Mono\',monospace;font-size:12px;color:var(--muted)">Skill content not loaded — run npm run build:skills</div>'; return; }
+
+  const lines = content.split('\n');
+  const rendered = lines.map(line => {
+    if(line.startsWith('#')) return `<div class="skill-rule header-rule">${escHtml(line.replace(/^#+\s*/,''))}</div>`;
+    if(line.trim().startsWith('-') || line.trim().startsWith('*')) return `<div class="skill-rule">${escHtml(line.replace(/^[\s\-\*]+/,''))}</div>`;
+    if(line.trim().startsWith('**')) return `<div class="skill-rule header-rule">${escHtml(line.replace(/\*\*/g,''))}</div>`;
+    if(line.trim().length > 20) return `<div class="skill-rule">${escHtml(line.trim())}</div>`;
+    return '';
+  }).filter(Boolean).join('');
+
+  body.innerHTML = rendered || `<div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);white-space:pre-wrap;">${escHtml(content.substring(0,1200))}</div>`;
+
+  // Update meta tags
+  document.getElementById('sc-meta').innerHTML = [meta.category, meta.llm, 'v1.0'].map(t => `<span class="skill-meta-tag">${t}</span>`).join('');
+}
+
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── Copy install ──────────────────────────────────────────────────
+function copyInstall(btn) {
+  navigator.clipboard.writeText('npm install -g skillforge-ai').then(() => {
+    btn.textContent = 'copied ✓';
+    setTimeout(() => { btn.textContent = 'copy'; }, 2000);
+  });
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  const firstTab = document.querySelector('.skill-tab');
+  if(firstTab) showSkill('frontend-design', firstTab);
+});
+</script>
+</body>
+</html>

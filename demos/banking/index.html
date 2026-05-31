@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexBank — Premium Banking</title>
+  
+  <!-- Fonts: Syne + DM Mono -->
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  
+  <style>
+    :root {
+      --bg:       #080c12;
+      --bg2:      #0d1420;
+      --surface:  #141e30;
+      --surface2: #1a2640;
+      --border:   rgba(255,255,255,0.06);
+      --border2:  rgba(255,255,255,0.12);
+      --text:     #e8edf5;
+      --muted:    #6b7a99;
+      --accent:   #0095ff;
+      --accent2:  #00d4aa;
+      --red:      #ff4757;
+      --green:    #00d4aa;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Background atmosphere */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      right: -20%;
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(0,149,255,0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -30%;
+      left: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0,212,170,0.06) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Grid overlay */
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(0,149,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,149,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Typography */
+    h1, h2, h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 3rem;
+      animation: fadeUp 0.6s ease 0.1s both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      background: rgba(8,12,18,0.85);
+      border-bottom: 1px solid var(--border);
+    }
+
+    nav .nav-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+    }
+
+    .nav-links a.active {
+      color: var(--accent);
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    main {
+      margin-top: 100px;
+    }
+
+    /* Card component */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: border-color 0.2s, transform 0.2s;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .card:hover {
+      border-color: var(--border2);
+    }
+
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    /* Grid layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .grid-2-equal {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Virtual Credit Card */
+    .bank-card {
+      background: linear-gradient(135deg, #1a2f50 0%, #0d1e36 100%);
+      border: 1px solid rgba(0,149,255,0.25);
+      border-radius: 20px;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      min-height: 240px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      animation: fadeUp 0.6s ease 0.2s both;
+    }
+
+    .bank-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: rgba(0,149,255,0.08);
+      pointer-events: none;
+    }
+
+    .bank-card::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      left: -10%;
+      width: 250px;
+      height: 250px;
+      border-radius: 50%;
+      background: rgba(0,212,170,0.06);
+      pointer-events: none;
+    }
+
+    .chip {
+      width: 50px;
+      height: 38px;
+      background: linear-gradient(135deg, #c8a84b, #f5c842);
+      border-radius: 6px;
+      position: relative;
+      z-index: 2;
+      animation: chipPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes chipPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.9; }
+    }
+
+    .chip::before,
+    .chip::after {
+      content: '';
+      position: absolute;
+      background: rgba(0,0,0,0.1);
+    }
+
+    .chip::before {
+      width: 60%;
+      height: 2px;
+      top: 35%;
+      left: 20%;
+    }
+
+    .chip::after {
+      width: 2px;
+      height: 60%;
+      left: 50%;
+      top: 20%;
+    }
+
+    .card-number {
+      font-size: 1.3rem;
+      letter-spacing: 0.25em;
+      color: rgba(255,255,255,0.85);
+      margin: 1.5rem 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      position: relative;
+      z-index: 2;
+    }
+
+    .card-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 0.25rem;
+    }
+
+    .card-name {
+      color: #fff;
+      font-size: 0.95rem;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+    }
+
+    .card-network {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 800;
+      font-style: italic;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* Account balance cards */
+    .balance-card {
+      animation-delay: 0.3s;
+    }
+
+    .balance-amount {
+      font-size: 2rem;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      margin: 0.5rem 0;
+      background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .balance-change {
+      font-size: 0.8rem;
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .balance-change.negative {
+      color: var(--red);
+    }
+
+    /* Account type badges */
+    .account-type {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .account-type.checking {
+      background: rgba(0,149,255,0.15);
+      color: var(--accent);
+    }
+
+    .account-type.savings {
+      background: rgba(0,212,170,0.15);
+      color: var(--accent2);
+    }
+
+    .account-type.investment {
+      background: rgba(245,200,66,0.15);
+      color: #f5c842;
+    }
+
+    /* Chart container */
+    .chart-container {
+      height: 280px;
+      position: relative;
+      animation-delay: 0.4s;
+    }
+
+    /* Transactions */
+    .txn-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      animation-delay: 0.5s;
+    }
+
+    .txn {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+
+    .txn:hover {
+      background: rgba(255,255,255,0.02);
+      margin: 0 -1rem;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    .txn:last-child {
+      border-bottom: none;
+    }
+
+    .txn-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .txn-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .txn-name {
+      font-size: 0.9rem;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .txn-date {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.15rem;
+    }
+
+    .txn-amount {
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: 'Syne', sans-serif;
+    }
+
+    .txn-amount.up {
+      color: var(--green);
+    }
+
+    .txn-amount.down {
+      color: var(--text);
+    }
+
+    /* Savings goals */
+    .goal {
+      margin-bottom: 1.5rem;
+      animation-delay: 0.6s;
+    }
+
+    .goal:last-child {
+      margin-bottom: 0;
+    }
+
+    .goal-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .goal-name {
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+
+    .goal-progress-text {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: var(--bg2);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
+      border-radius: 4px;
+      transition: width 1s ease;
+      position: relative;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* Bills */
+    .bill {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .bill:last-child {
+      border-bottom: none;
+    }
+
+    .bill-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .bill-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .bill-name {
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    .bill-due {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.15rem;
+    }
+
+    .bill-amount {
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: 'Syne', sans-serif;
+      color: var(--text);
+    }
+
+    .bill-status {
+      font-size: 0.7rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-left: 1rem;
+    }
+
+    .bill-status.due-soon {
+      background: rgba(255,71,87,0.15);
+      color: var(--red);
+    }
+
+    .bill-status.paid {
+      background: rgba(0,212,170,0.15);
+      color: var(--green);
+    }
+
+    /* Pulse animation */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s ease-in-out infinite;
+      display: inline-block;
+      margin-right: 0.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .grid-2, .grid-3, .grid-2-equal {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .balance-amount {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-overlay"></div>
+
+  <nav>
+    <div class="nav-inner">
+      <div class="logo">NexBank</div>
+      <ul class="nav-links">
+        <li><a href="#" class="active">Dashboard</a></li>
+        <li><a href="#">Accounts</a></li>
+        <li><a href="#">Transfers</a></li>
+        <li><a href="#">Cards</a></li>
+        <li><a href="#">Analytics</a></li>
+      </ul>
+      <div class="user-profile">
+        <div class="avatar">AM</div>
+        <span style="font-size: 0.85rem; color: var(--muted);">Alex Morgan</span>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <div class="container">
+      <h1>Welcome back, Alex</h1>
+      <div class="subtitle">
+        <span class="pulse-dot"></span>
+        All systems operational · Last updated: <span id="lastUpdate"></span>
+      </div>
+
+      <!-- Virtual Card + Balances -->
+      <div class="grid-2">
+        <div class="bank-card">
+          <div>
+            <div class="chip"></div>
+            <div class="card-number">4821 •••• •••• 7392</div>
+          </div>
+          <div class="card-footer">
+            <div>
+              <div class="card-label">Card Holder</div>
+              <div class="card-name">Alex Morgan</div>
+            </div>
+            <div>
+              <div class="card-label">Valid Thru</div>
+              <div class="card-name">08/28</div>
+            </div>
+            <div class="card-network">VISA</div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+          <div class="card balance-card">
+            <div class="account-type checking">Checking</div>
+            <div class="balance-amount">$12,847.23</div>
+            <div class="balance-change">▲ $347.23 this month</div>
+          </div>
+
+          <div class="card balance-card" style="animation-delay: 0.35s;">
+            <div class="account-type savings">Savings</div>
+            <div class="balance-amount">$45,892.00</div>
+            <div class="balance-change">▲ $1,200.00 this month</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Investment + Spending Chart -->
+      <div class="grid-2-equal">
+        <div class="card balance-card" style="animation-delay: 0.4s;">
+          <div class="account-type investment">Investment</div>
+          <div class="balance-amount">$184,391.84</div>
+          <div class="balance-change">▲ $4,391.84 this month</div>
+          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--muted);">
+            Portfolio return: <span style="color: var(--green);">+18.2%</span> YTD
+          </div>
+        </div>
+
+        <div class="card chart-container">
+          <div class="card-title">Monthly Spending by Category</div>
+          <canvas id="spendingChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Transactions + Savings Goals -->
+      <div class="grid-2-equal">
+        <div class="card txn-list">
+          <div class="card-title">Recent Transactions</div>
+          <div id="transactionsList"></div>
+        </div>
+
+        <div class="card" style="animation-delay: 0.55s;">
+          <div class="card-title">Savings Goals</div>
+          <div id="savingsGoals"></div>
+        </div>
+      </div>
+
+      <!-- Bills Due -->
+      <div class="card" style="animation-delay: 0.6s;">
+        <div class="card-title">Bills & Payments</div>
+        <div id="billsList"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // Chart.js global defaults
+    Chart.defaults.color = '#6b7a99';
+    Chart.defaults.font.family = "'DM Mono', monospace";
+
+    // Update timestamp
+    function updateTimestamp() {
+      const now = new Date();
+      document.getElementById('lastUpdate').textContent = now.toLocaleTimeString();
+    }
+    updateTimestamp();
+    setInterval(updateTimestamp, 60000);
+
+    // Monthly Spending Chart
+    const spendingCtx = document.getElementById('spendingChart').getContext('2d');
+    new Chart(spendingCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Food', 'Transport', 'Shopping', 'Bills', 'Entertainment', 'Health', 'Other'],
+        datasets: [{
+          label: 'Spent',
+          data: [1240, 580, 2150, 890, 430, 320, 540],
+          backgroundColor: (ctx) => {
+            const max = Math.max(...ctx.dataset.data);
+            return ctx.parsed.y === max ? '#0095ff' : 'rgba(0,149,255,0.25)';
+          },
+          borderRadius: 8,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(13,20,32,0.95)',
+            padding: 12,
+            bodyFont: { size: 13 },
+            callbacks: {
+              label: (c) => ` $${c.parsed.y.toLocaleString()}`
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { font: { size: 11 } }
+          },
+          y: {
+            grid: { color: 'rgba(255,255,255,0.04)' },
+            ticks: {
+              callback: (v) => '$' + (v / 1000).toFixed(1) + 'K',
+              font: { size: 11 }
+            }
+          }
+        }
+      }
+    });
+
+    // Transactions data
+    const transactions = [
+      { icon: '🍎', name: 'Apple Store', date: 'Apr 28, 2026', amount: -1299, color: 'rgba(0,149,255,0.12)' },
+      { icon: '☕', name: 'Starbucks', date: 'Apr 28, 2026', amount: -8.50, color: 'rgba(0,212,170,0.12)' },
+      { icon: '💼', name: 'Salary Deposit', date: 'Apr 25, 2026', amount: 8500, color: 'rgba(245,200,66,0.12)' },
+      { icon: '🚗', name: 'Shell Gas Station', date: 'Apr 24, 2026', amount: -62, color: 'rgba(255,71,87,0.12)' },
+      { icon: '🏪', name: 'Whole Foods', date: 'Apr 23, 2026', amount: -142.35, color: 'rgba(0,149,255,0.12)' },
+      { icon: '🎬', name: 'Netflix', date: 'Apr 22, 2026', amount: -15.99, color: 'rgba(255,71,87,0.12)' },
+      { icon: '⚡', name: 'Electric Bill', date: 'Apr 20, 2026', amount: -124, color: 'rgba(245,200,66,0.12)' }
+    ];
+
+    function renderTransactions() {
+      document.getElementById('transactionsList').innerHTML = transactions.map(t => `
+        <div class="txn">
+          <div class="txn-left">
+            <div class="txn-icon" style="background:${t.color}">${t.icon}</div>
+            <div>
+              <div class="txn-name">${t.name}</div>
+              <div class="txn-date">${t.date}</div>
+            </div>
+          </div>
+          <div class="txn-amount ${t.amount > 0 ? 'up' : 'down'}">
+            ${t.amount > 0 ? '+' : ''}$${Math.abs(t.amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+          </div>
+        </div>
+      `).join('');
+    }
+    renderTransactions();
+
+    // Savings Goals
+    const goals = [
+      { name: 'Emergency Fund', current: 18500, target: 25000, color: 'var(--accent)' },
+      { name: 'Vacation to Japan', current: 4200, target: 8000, color: 'var(--accent2)' },
+      { name: 'New Car Down Payment', current: 12000, target: 15000, color: '#f5c842' }
+    ];
+
+    function renderGoals() {
+      document.getElementById('savingsGoals').innerHTML = goals.map(g => {
+        const percent = Math.min((g.current / g.target) * 100, 100);
+        return `
+          <div class="goal card">
+            <div class="goal-header">
+              <div class="goal-name">${g.name}</div>
+              <div class="goal-progress-text">$${g.current.toLocaleString()} / $${g.target.toLocaleString()}</div>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${percent}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    renderGoals();
+
+    // Bills
+    const bills = [
+      { icon: '📱', name: 'AT&T Wireless', due: 'May 1', amount: 89.99, status: 'due-soon', color: 'rgba(0,149,255,0.12)' },
+      { icon: '🏠', name: 'Rent Payment', due: 'May 1', amount: 1850, status: 'due-soon', color: 'rgba(255,71,87,0.12)' },
+      { icon: '💡', name: 'Internet (Comcast)', due: 'May 5', amount: 79.99, status: 'paid', color: 'rgba(0,212,170,0.12)' },
+      { icon: '🚰', name: 'Water & Utilities', due: 'May 8', amount: 124.50, status: 'paid', color: 'rgba(245,200,66,0.12)' }
+    ];
+
+    function renderBills() {
+      document.getElementById('billsList').innerHTML = bills.map(b => `
+        <div class="bill">
+          <div class="bill-left">
+            <div class="bill-icon" style="background:${b.color}">${b.icon}</div>
+            <div>
+              <div class="bill-name">${b.name}</div>
+              <div class="bill-due">Due ${b.due}</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center;">
+            <div class="bill-amount">$${b.amount.toFixed(2)}</div>
+            <div class="bill-status ${b.status}">${b.status === 'due-soon' ? 'Due Soon' : 'Paid'}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+    renderBills();
+
+    // Animate progress bars on load
+    setTimeout(() => {
+      document.querySelectorAll('.progress-fill').forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => bar.style.width = width, 100);
+      });
+    }, 800);
+  </script>
+</body>
+</html>
