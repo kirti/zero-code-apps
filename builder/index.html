@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI App Builder — zero-code-apps</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #070a0f;
+  --surface: #0d1117;
+  --surface2: #161b22;
+  --border: #21262d;
+  --border2: #30363d;
+  --accent: #00d4aa;
+  --accent2: #7c3aed;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --green: #3fb950;
+  --red: #f85149;
+  --blue: #58a6ff;
+  --amber: #f0883e;
+  --claude: #d4753a;
+  --openai: #10a37f;
+  --gemini: #4285f4;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; min-height:100vh; overflow-x:hidden; }
+body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(0,212,170,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,170,0.025) 1px,transparent 1px); background-size:48px 48px; pointer-events:none; z-index:0; }
+
+/* NAV */
+nav { position:sticky; top:0; z-index:100; background:rgba(7,10,15,0.9); backdrop-filter:blur(12px); border-bottom:0.5px solid var(--border); padding:0 24px; height:52px; display:flex; align-items:center; justify-content:space-between; }
+.nav-logo { font-family:'DM Mono',monospace; font-size:13px; color:var(--accent); display:flex; align-items:center; gap:8px; text-decoration:none; }
+.nav-logo span { color:var(--muted); }
+.nav-links { display:flex; align-items:center; gap:16px; }
+.nav-links a { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); text-decoration:none; transition:color .2s; }
+.nav-links a:hover { color:var(--text); }
+.nav-badge { font-family:'DM Mono',monospace; font-size:10px; background:rgba(0,212,170,0.1); color:var(--accent); border:0.5px solid rgba(0,212,170,0.3); border-radius:4px; padding:3px 8px; }
+
+/* HERO */
+.hero { text-align:center; padding:48px 24px 32px; position:relative; z-index:1; }
+.hero-eyebrow { font-family:'DM Mono',monospace; font-size:11px; color:var(--accent); letter-spacing:0.2em; text-transform:uppercase; margin-bottom:16px; }
+.hero h1 { font-size:clamp(1.8rem,4vw,3rem); font-weight:800; line-height:1.1; margin-bottom:12px; }
+.hero h1 em { font-style:normal; color:var(--accent); }
+.hero p { font-family:'DM Mono',monospace; font-size:13px; color:var(--muted); max-width:500px; margin:0 auto 24px; line-height:1.7; }
+
+/* PROVIDER TABS */
+.provider-row { display:flex; justify-content:center; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+.provider-btn { font-family:'DM Mono',monospace; font-size:12px; padding:8px 18px; border-radius:6px; border:1px solid var(--border2); background:var(--surface); color:var(--muted); cursor:pointer; transition:all .2s; display:flex; align-items:center; gap:6px; }
+.provider-btn:hover { border-color:var(--border2); background:var(--surface2); color:var(--text); }
+.provider-btn.active-claude { border-color:var(--claude); background:rgba(212,117,58,0.1); color:var(--claude); }
+.provider-btn.active-openai { border-color:var(--openai); background:rgba(16,163,127,0.1); color:var(--openai); }
+.provider-btn.active-gemini { border-color:var(--gemini); background:rgba(66,133,244,0.1); color:var(--gemini); }
+.provider-dot { width:7px; height:7px; border-radius:50%; }
+.dot-claude { background:var(--claude); }
+.dot-openai { background:var(--openai); }
+.dot-gemini { background:var(--gemini); }
+
+/* MAIN LAYOUT */
+.main { display:grid; grid-template-columns:320px 1fr; gap:12px; padding:0 16px 40px; max-width:1400px; margin:0 auto; position:relative; z-index:1; }
+
+/* LEFT PANEL */
+.left-panel { display:flex; flex-direction:column; gap:10px; }
+.panel-card { background:var(--surface); border:0.5px solid var(--border); border-radius:8px; overflow:hidden; }
+.panel-header { padding:10px 14px; border-bottom:0.5px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.panel-header-title { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; }
+.panel-body { padding:14px; }
+
+/* PROMPT */
+textarea#prompt { width:100%; background:var(--surface2); border:0.5px solid var(--border); border-radius:6px; padding:12px; font-family:'DM Mono',monospace; font-size:12px; color:var(--text); resize:vertical; min-height:100px; line-height:1.6; transition:border-color .2s; }
+textarea#prompt:focus { outline:none; border-color:var(--accent); }
+textarea#prompt::placeholder { color:var(--muted); }
+
+/* EXAMPLE PROMPTS */
+.examples { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
+.example-btn { font-family:'DM Mono',monospace; font-size:11px; background:transparent; border:0.5px solid var(--border); border-radius:5px; padding:8px 10px; color:var(--muted); cursor:pointer; text-align:left; transition:all .2s; line-height:1.5; }
+.example-btn:hover { border-color:var(--accent); color:var(--accent); background:rgba(0,212,170,0.05); }
+
+/* SKILLS */
+.skills-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.skill-toggle { display:flex; align-items:center; gap:6px; cursor:pointer; }
+.skill-toggle input { display:none; }
+.skill-chip { font-family:'DM Mono',monospace; font-size:10px; padding:5px 8px; border-radius:4px; border:0.5px solid var(--border); background:var(--surface2); color:var(--muted); cursor:pointer; transition:all .2s; width:100%; text-align:center; }
+.skill-toggle input:checked + .skill-chip { border-color:var(--accent); background:rgba(0,212,170,0.1); color:var(--accent); }
+
+/* API KEY */
+.api-key-row { display:flex; flex-direction:column; gap:6px; }
+.key-input-wrap { position:relative; }
+.key-input-wrap input { width:100%; background:var(--surface2); border:0.5px solid var(--border); border-radius:5px; padding:8px 32px 8px 10px; font-family:'DM Mono',monospace; font-size:11px; color:var(--text); transition:border-color .2s; }
+.key-input-wrap input:focus { outline:none; border-color:var(--accent); }
+.key-input-wrap input::placeholder { color:var(--muted); }
+.key-toggle { position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--muted); cursor:pointer; font-size:12px; }
+.key-note { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); line-height:1.5; }
+
+/* BUILD BUTTON */
+.build-btn { width:100%; padding:12px; background:var(--accent); color:#000; border:none; border-radius:6px; font-family:'Syne',sans-serif; font-weight:700; font-size:13px; cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:8px; }
+.build-btn:hover { background:#00bfa0; transform:translateY(-1px); }
+.build-btn:active { transform:translateY(0); }
+.build-btn:disabled { background:var(--surface2); color:var(--muted); cursor:not-allowed; transform:none; }
+.build-btn .spinner { width:14px; height:14px; border:2px solid rgba(0,0,0,0.3); border-top-color:#000; border-radius:50%; animation:spin .7s linear infinite; display:none; }
+.build-btn.loading .spinner { display:block; }
+.build-btn.loading .btn-text { display:none; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* RIGHT PANEL */
+.right-panel { display:flex; flex-direction:column; gap:10px; }
+.preview-header { background:var(--surface); border:0.5px solid var(--border); border-radius:8px 8px 0 0; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; border-bottom:0.5px solid var(--border); }
+.preview-tabs { display:flex; gap:4px; }
+.preview-tab { font-family:'DM Mono',monospace; font-size:11px; padding:5px 12px; border-radius:4px; border:0.5px solid transparent; color:var(--muted); cursor:pointer; transition:all .2s; }
+.preview-tab.active { background:var(--surface2); border-color:var(--border); color:var(--text); }
+.preview-actions { display:flex; gap:6px; }
+.action-btn { font-family:'DM Mono',monospace; font-size:11px; padding:5px 12px; border-radius:4px; border:0.5px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; transition:all .2s; display:flex; align-items:center; gap:4px; }
+.action-btn:hover { border-color:var(--accent); color:var(--accent); }
+.action-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+/* IFRAME CONTAINER */
+.iframe-wrap { background:var(--surface); border:0.5px solid var(--border); border-top:none; border-radius:0 0 8px 8px; position:relative; min-height:600px; overflow:hidden; }
+iframe#preview { width:100%; height:600px; border:none; background:#fff; display:none; }
+
+/* EMPTY STATE */
+.empty-state { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:40px; }
+.empty-icon { width:64px; height:64px; border-radius:12px; background:var(--surface2); border:0.5px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:28px; }
+.empty-title { font-size:16px; font-weight:600; color:var(--text); }
+.empty-sub { font-family:'DM Mono',monospace; font-size:12px; color:var(--muted); text-align:center; line-height:1.7; max-width:320px; }
+
+/* STREAMING STATE */
+.stream-state { position:absolute; inset:0; display:none; flex-direction:column; }
+.stream-header { padding:12px 16px; border-bottom:0.5px solid var(--border); display:flex; align-items:center; gap:10px; }
+.stream-dot { width:8px; height:8px; border-radius:50%; background:var(--accent); animation:pulse 1.2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.85)} }
+.stream-label { font-family:'DM Mono',monospace; font-size:11px; color:var(--accent); }
+.stream-stats { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); margin-left:auto; }
+.stream-body { flex:1; overflow:auto; padding:16px; }
+.stream-body pre { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); line-height:1.6; white-space:pre-wrap; word-break:break-all; }
+.stream-highlight { color:var(--accent); }
+
+/* CODE TAB */
+.code-wrap { background:var(--surface); border:0.5px solid var(--border); border-top:none; border-radius:0 0 8px 8px; min-height:600px; display:none; }
+.code-wrap pre { padding:20px; font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); line-height:1.7; white-space:pre-wrap; word-break:break-all; overflow:auto; max-height:600px; }
+
+/* STATUS BAR */
+.status-bar { background:var(--surface); border:0.5px solid var(--border); border-radius:6px; padding:8px 14px; display:flex; align-items:center; gap:10px; font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); }
+.status-indicator { width:6px; height:6px; border-radius:50%; background:var(--border2); }
+.status-indicator.active { background:var(--accent); animation:pulse 1.2s infinite; }
+.status-indicator.done { background:var(--green); animation:none; }
+.status-indicator.error { background:var(--red); animation:none; }
+
+/* COMPARISON */
+.compare-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.compare-card { background:var(--surface); border:0.5px solid var(--border); border-radius:8px; overflow:hidden; }
+.compare-card-header { padding:8px 12px; border-bottom:0.5px solid var(--border); display:flex; align-items:center; gap:6px; font-family:'DM Mono',monospace; font-size:11px; }
+.compare-card iframe { width:100%; height:300px; border:none; background:#fff; }
+.compare-card .compare-empty { height:300px; display:flex; align-items:center; justify-content:center; font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); }
+
+/* FOOTER */
+footer { text-align:center; padding:32px 24px; border-top:0.5px solid var(--border); font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); position:relative; z-index:1; }
+footer a { color:var(--accent); text-decoration:none; }
+footer a:hover { text-decoration:underline; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .main { grid-template-columns:1fr; }
+  .compare-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="../" class="nav-logo">zero-code-apps <span>/ builder</span></a>
+  <div class="nav-links">
+    <a href="../cozy/">✦ cozy generator</a>
+    <a href="https://github.com/kirti/zero-code-apps" target="_blank">github</a>
+    <a href="https://www.npmjs.com/package/skillforge-ai" target="_blank">npm</a>
+    <span class="nav-badge">powered by skillforge-ai</span>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow">AI App Builder · Fintech Edition</div>
+  <h1>Describe it.<br/><em>Watch it build.</em></h1>
+  <p>Type a fintech app in plain English. Choose your AI. Watch it stream into a live, downloadable web app — in seconds.</p>
+
+  <div class="provider-row">
+    <button class="provider-btn active-claude" onclick="setProvider('claude')" id="btn-claude">
+      <span class="provider-dot dot-claude"></span> Claude
+    </button>
+    <button class="provider-btn" onclick="setProvider('openai')" id="btn-openai">
+      <span class="provider-dot dot-openai"></span> GPT-4o
+    </button>
+    <button class="provider-btn" onclick="setProvider('gemini')" id="btn-gemini">
+      <span class="provider-dot dot-gemini"></span> Gemini
+    </button>
+    <button class="provider-btn" onclick="setProvider('compare')" id="btn-compare" style="border-color:var(--accent2);color:var(--accent2);">
+      ⚡ Compare all 3
+    </button>
+  </div>
+</div>
+
+<div class="main">
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+
+    <!-- Prompt -->
+    <div class="panel-card">
+      <div class="panel-header">
+        <span class="panel-header-title">Describe your app</span>
+      </div>
+      <div class="panel-body">
+        <textarea id="prompt" placeholder="Build a dark crypto trading dashboard with BTC, ETH, SOL live prices, candlestick chart, portfolio P&L tracker, and watchlist with sparklines..."></textarea>
+        <div class="examples">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:4px;">QUICK START</div>
+          <button class="example-btn" onclick="setPrompt(this)">🪙 Crypto trading dashboard — BTC/ETH/SOL live prices, candlestick chart, portfolio tracker, watchlist</button>
+          <button class="example-btn" onclick="setPrompt(this)">📊 Wealth management — asset allocation donut, portfolio performance, holdings table with P&L</button>
+          <button class="example-btn" onclick="setPrompt(this)">🔍 Stock screener — filter by PE ratio, market cap, sector with results table and sparklines</button>
+          <button class="example-btn" onclick="setPrompt(this)">💹 Order flow visualiser — live buy/sell stream, market depth chart, trade execution feed</button>
+          <button class="example-btn" onclick="setPrompt(this)">🏦 Banking dashboard — account overview, transaction history, spending by category, savings goals</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Skills -->
+    <div class="panel-card">
+      <div class="panel-header">
+        <span class="panel-header-title">skillforge-ai skills</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">prompt modifiers</span>
+      </div>
+      <div class="panel-body">
+        <div class="skills-grid">
+          <label class="skill-toggle"><input type="checkbox" id="skill-frontend" checked><span class="skill-chip">✦ frontend-design</span></label>
+          <label class="skill-toggle"><input type="checkbox" id="skill-chart" checked><span class="skill-chip">📊 chart-js</span></label>
+          <label class="skill-toggle"><input type="checkbox" id="skill-fintech" checked><span class="skill-chip">💹 fintech-ui</span></label>
+          <label class="skill-toggle"><input type="checkbox" id="skill-api" checked><span class="skill-chip">🔌 api-integration</span></label>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:10px;line-height:1.6;">Skills guide the AI on design patterns, component styles, and API integrations. Toggle to see the difference.</div>
+      </div>
+    </div>
+
+    <!-- API Keys -->
+    <div class="panel-card" id="api-keys-panel">
+      <div class="panel-header">
+        <span class="panel-header-title">API key</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">stays in browser</span>
+      </div>
+      <div class="panel-body">
+        <div class="api-key-row" id="claude-key-row">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">ANTHROPIC API KEY</div>
+          <div class="key-input-wrap">
+            <input type="password" id="claude-key" placeholder="sk-ant-..." autocomplete="off">
+            <button class="key-toggle" onclick="toggleKey('claude-key')">👁</button>
+          </div>
+        </div>
+        <div class="api-key-row" id="openai-key-row" style="display:none;margin-top:10px;">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">OPENAI API KEY</div>
+          <div class="key-input-wrap">
+            <input type="password" id="openai-key" placeholder="sk-..." autocomplete="off">
+            <button class="key-toggle" onclick="toggleKey('openai-key')">👁</button>
+          </div>
+        </div>
+        <div class="api-key-row" id="gemini-key-row" style="display:none;margin-top:10px;">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">GEMINI API KEY</div>
+          <div class="key-input-wrap">
+            <input type="password" id="gemini-key" placeholder="AIza..." autocomplete="off">
+            <button class="key-toggle" onclick="toggleKey('gemini-key')">👁</button>
+          </div>
+        </div>
+        <div class="key-note" style="margin-top:10px;">Your key never leaves your browser. All API calls are made directly from your device.</div>
+      </div>
+    </div>
+
+    <!-- Build button -->
+    <button class="build-btn" id="build-btn" onclick="buildApp()">
+      <div class="spinner"></div>
+      <span class="btn-text">⚡ Build App</span>
+    </button>
+
+    <!-- Status -->
+    <div class="status-bar">
+      <div class="status-indicator" id="status-dot"></div>
+      <span id="status-text">Ready — choose a prompt and build</span>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+
+    <!-- Single provider view -->
+    <div id="single-view">
+      <div class="preview-header">
+        <div class="preview-tabs">
+          <button class="preview-tab active" onclick="switchTab('preview')" id="tab-preview">Preview</button>
+          <button class="preview-tab" onclick="switchTab('code')" id="tab-code">Code</button>
+          <button class="preview-tab" onclick="switchTab('stream')" id="tab-stream">Stream</button>
+        </div>
+        <div class="preview-actions">
+          <button class="action-btn" id="share-btn" onclick="shareApp()" disabled>
+            🔗 Share
+          </button>
+          <button class="action-btn" id="download-btn" onclick="downloadApp()" disabled>
+            ↓ Download
+          </button>
+        </div>
+      </div>
+
+      <!-- Preview tab -->
+      <div class="iframe-wrap" id="preview-wrap">
+        <div class="empty-state" id="empty-state">
+          <div class="empty-icon">💹</div>
+          <div class="empty-title">Your app will appear here</div>
+          <div class="empty-sub">Choose a prompt, select your skills and AI provider, then hit Build App. Watch it stream in real time.</div>
+        </div>
+        <div class="stream-state" id="stream-state">
+          <div class="stream-header">
+            <div class="stream-dot"></div>
+            <span class="stream-label" id="stream-label">Streaming from Claude...</span>
+            <span class="stream-stats" id="stream-stats">0 tokens</span>
+          </div>
+          <div class="stream-body">
+            <pre id="stream-pre"></pre>
+          </div>
+        </div>
+        <iframe id="preview" title="Generated app preview"></iframe>
+      </div>
+
+      <!-- Code tab -->
+      <div class="code-wrap" id="code-wrap">
+        <pre id="code-pre">// Generated code will appear here</pre>
+      </div>
+    </div>
+
+    <!-- Compare view -->
+    <div id="compare-view" style="display:none;">
+      <div class="compare-grid">
+        <div class="compare-card">
+          <div class="compare-card-header" style="color:var(--claude);">
+            <span class="provider-dot dot-claude"></span> Claude
+            <span id="claude-token-count" style="margin-left:auto;color:var(--muted);">—</span>
+          </div>
+          <div class="compare-empty" id="claude-empty">waiting...</div>
+          <iframe id="claude-preview" title="Claude output" style="display:none;"></iframe>
+        </div>
+        <div class="compare-card">
+          <div class="compare-card-header" style="color:var(--openai);">
+            <span class="provider-dot dot-openai"></span> GPT-4o
+            <span id="openai-token-count" style="margin-left:auto;color:var(--muted);">—</span>
+          </div>
+          <div class="compare-empty" id="openai-empty">waiting...</div>
+          <iframe id="openai-preview" title="OpenAI output" style="display:none;"></iframe>
+        </div>
+        <div class="compare-card">
+          <div class="compare-card-header" style="color:var(--gemini);">
+            <span class="provider-dot dot-gemini"></span> Gemini
+            <span id="gemini-token-count" style="margin-left:auto;color:var(--muted);">—</span>
+          </div>
+          <div class="compare-empty" id="gemini-empty">waiting...</div>
+          <iframe id="gemini-preview" title="Gemini output" style="display:none;"></iframe>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <div>Built by <a href="https://www.linkedin.com/in/kirti3/" target="_blank">Kirti Kaushal</a> · Senior AI/ML + Full Stack Engineer</div>
+  <div style="margin-top:6px;">
+    <a href="https://github.com/kirti/zero-code-apps" target="_blank">GitHub</a> ·
+    <a href="https://www.npmjs.com/package/skillforge-ai" target="_blank">skillforge-ai on npm</a> ·
+    <a href="https://kirtikau.medium.com" target="_blank">Medium</a> ·
+    <a href="../cozy/">Cozy Generator</a>
+  </div>
+</footer>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────
+let currentProvider = 'claude';
+let generatedCode = '';
+let tokenCount = 0;
+
+const SKILL_CONTENTS = {
+  'frontend-design': 'Use dark premium UI design. Colors: bg #080c12, accent #00d4aa, font Syne + DM Mono. CSS variables system. Avoid Inter/Arial. Use animations and micro-interactions. Grid backgrounds. Gradient overlays.',
+  'chart-js': 'Use Chart.js for all charts. Dark theme: gridColor rgba(255,255,255,0.06), tickColor #6b7a99, DM Mono font for axes. Gradient fills. Period switcher buttons. Smooth animations.',
+  'fintech-ui': 'Include: scrolling ticker bar, SVG sparklines for price changes, virtual trading card UI, watchlist with live prices, candlestick or line charts. Use green #00d4aa for gains, red #f85149 for losses. Professional fintech aesthetics.',
+  'api-integration': 'For crypto data use CoinGecko API (free, no key): https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true. Always include try/catch with realistic mock data fallback. Show API status indicator.'
+};
+
+// ── Provider switching ─────────────────────────────────────────────
+function setProvider(p) {
+  currentProvider = p;
+  ['claude','openai','gemini','compare'].forEach(id => {
+    const btn = document.getElementById('btn-' + id);
+    btn.className = 'provider-btn';
+    if(id === p) btn.classList.add('active-' + id);
+  });
+  // Show/hide key fields
+  document.getElementById('claude-key-row').style.display = ['claude','compare'].includes(p) ? '' : 'none';
+  document.getElementById('openai-key-row').style.display = ['openai','compare'].includes(p) ? '' : 'none';
+  document.getElementById('gemini-key-row').style.display = ['gemini','compare'].includes(p) ? '' : 'none';
+  // Show/hide views
+  document.getElementById('single-view').style.display = p === 'compare' ? 'none' : '';
+  document.getElementById('compare-view').style.display = p === 'compare' ? '' : 'none';
+}
+
+// ── Prompt helpers ─────────────────────────────────────────────────
+function setPrompt(btn) {
+  document.getElementById('prompt').value = btn.textContent.replace(/^[^\s]+\s/, '');
+}
+
+function buildSystemPrompt() {
+  const skills = [];
+  if(document.getElementById('skill-frontend').checked) skills.push(SKILL_CONTENTS['frontend-design']);
+  if(document.getElementById('skill-chart').checked) skills.push(SKILL_CONTENTS['chart-js']);
+  if(document.getElementById('skill-fintech').checked) skills.push(SKILL_CONTENTS['fintech-ui']);
+  if(document.getElementById('skill-api').checked) skills.push(SKILL_CONTENTS['api-integration']);
+
+  return `You are an expert frontend engineer. Generate a complete, single-file HTML application.
+
+SKILL GUIDELINES:
+${skills.join('\n\n')}
+
+OUTPUT RULES:
+- Output ONLY raw HTML. No markdown, no code blocks, no explanation.
+- Single self-contained HTML file with all CSS and JS inline.
+- Must be visually impressive and production-quality.
+- Include Chart.js from cdnjs if charts are needed.
+- Include Google Fonts (Syne + DM Mono) from fonts.googleapis.com.
+- Make it fully functional with realistic mock data.
+- Start with <!DOCTYPE html> directly.`;
+}
+
+// ── Status ─────────────────────────────────────────────────────────
+function setStatus(text, state) {
+  document.getElementById('status-text').textContent = text;
+  const dot = document.getElementById('status-dot');
+  dot.className = 'status-indicator' + (state ? ' ' + state : '');
+}
+
+// ── Tab switching ──────────────────────────────────────────────────
+function switchTab(tab) {
+  ['preview','code','stream'].forEach(t => {
+    document.getElementById('tab-' + t)?.classList.remove('active');
+  });
+  document.getElementById('tab-' + tab)?.classList.add('active');
+  document.getElementById('preview-wrap').style.display = tab === 'preview' ? '' : 'none';
+  document.getElementById('code-wrap').style.display = tab === 'code' ? '' : 'none';
+}
+
+// ── Streaming helpers ──────────────────────────────────────────────
+function showStreaming(providerName) {
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('stream-state').style.display = 'flex';
+  document.getElementById('preview').style.display = 'none';
+  document.getElementById('stream-label').textContent = 'Streaming from ' + providerName + '...';
+  document.getElementById('stream-pre').textContent = '';
+  tokenCount = 0;
+}
+
+function appendStream(chunk) {
+  const pre = document.getElementById('stream-pre');
+  pre.textContent += chunk;
+  pre.scrollTop = pre.scrollHeight;
+  tokenCount += Math.ceil(chunk.length / 4);
+  document.getElementById('stream-stats').textContent = tokenCount + ' tokens';
+}
+
+function showPreview(html) {
+  document.getElementById('stream-state').style.display = 'none';
+  document.getElementById('preview').style.display = 'block';
+  const iframe = document.getElementById('preview');
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.open(); doc.write(html); doc.close();
+  generatedCode = html;
+  document.getElementById('code-pre').textContent = html;
+  document.getElementById('download-btn').disabled = false;
+  document.getElementById('share-btn').disabled = false;
+}
+
+function extractHTML(text) {
+  const block = text.match(/```(?:html)?\n?([\s\S]*?)```/);
+  if(block) return block[1].trim();
+  const doctype = text.indexOf('<!DOCTYPE');
+  if(doctype >= 0) return text.slice(doctype).trim();
+  const html = text.indexOf('<html');
+  if(html >= 0) return text.slice(html).trim();
+  return text.trim();
+}
+
+// ── Claude streaming ───────────────────────────────────────────────
+async function streamClaude(prompt, systemPrompt, key) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 8000,
+      stream: true,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  if(!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Claude API error'); }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = '';
+  while(true) {
+    const { done, value } = await reader.read();
+    if(done) break;
+    const lines = decoder.decode(value).split('\n');
+    for(const line of lines) {
+      if(!line.startsWith('data:')) continue;
+      try {
+        const data = JSON.parse(line.slice(5));
+        if(data.type === 'content_block_delta' && data.delta?.text) {
+          fullText += data.delta.text;
+          appendStream(data.delta.text);
+        }
+      } catch {}
+    }
+  }
+  return fullText;
+}
+
+// ── OpenAI streaming ───────────────────────────────────────────────
+async function streamOpenAI(prompt, systemPrompt, key) {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      max_tokens: 8000,
+      stream: true,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+      ]
+    })
+  });
+  if(!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'OpenAI API error'); }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = '';
+  while(true) {
+    const { done, value } = await reader.read();
+    if(done) break;
+    const lines = decoder.decode(value).split('\n');
+    for(const line of lines) {
+      if(!line.startsWith('data:') || line.includes('[DONE]')) continue;
+      try {
+        const data = JSON.parse(line.slice(5));
+        const delta = data.choices?.[0]?.delta?.content;
+        if(delta) { fullText += delta; appendStream(delta); }
+      } catch {}
+    }
+  }
+  return fullText;
+}
+
+// ── Gemini (non-streaming, returns full) ───────────────────────────
+async function callGemini(prompt, systemPrompt, key) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 8000 }
+      })
+    }
+  );
+  if(!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Gemini API error'); }
+  const data = await res.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  // Simulate streaming for visual effect
+  for(let i = 0; i < text.length; i += 40) {
+    appendStream(text.slice(i, i + 40));
+    await new Promise(r => setTimeout(r, 10));
+  }
+  return text;
+}
+
+// ── Main build ─────────────────────────────────────────────────────
+async function buildApp() {
+  const prompt = document.getElementById('prompt').value.trim();
+  if(!prompt) { alert('Please enter a prompt first'); return; }
+
+  const btn = document.getElementById('build-btn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  setStatus('Building...', 'active');
+
+  const systemPrompt = buildSystemPrompt();
+
+  try {
+    if(currentProvider === 'compare') {
+      await buildCompare(prompt, systemPrompt);
+    } else {
+      await buildSingle(prompt, systemPrompt);
+    }
+  } catch(e) {
+    setStatus('Error: ' + e.message, 'error');
+    document.getElementById('empty-state').style.display = 'flex';
+    document.getElementById('stream-state').style.display = 'none';
+    alert('Error: ' + e.message);
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+async function buildSingle(prompt, systemPrompt) {
+  const providerNames = { claude: 'Claude', openai: 'GPT-4o', gemini: 'Gemini' };
+  showStreaming(providerNames[currentProvider]);
+  switchTab('stream');
+
+  let rawText = '';
+  const key = document.getElementById(currentProvider + '-key').value.trim();
+  if(!key) throw new Error('Please enter your ' + providerNames[currentProvider] + ' API key');
+
+  if(currentProvider === 'claude') rawText = await streamClaude(prompt, systemPrompt, key);
+  else if(currentProvider === 'openai') rawText = await streamOpenAI(prompt, systemPrompt, key);
+  else rawText = await callGemini(prompt, systemPrompt, key);
+
+  const html = extractHTML(rawText);
+  showPreview(html);
+  switchTab('preview');
+  setStatus('Done — ' + tokenCount + ' tokens · ' + (html.length / 1024).toFixed(1) + 'kb', 'done');
+
+  // Save to URL
+  const encoded = btoa(encodeURIComponent(prompt));
+  history.replaceState(null, '', '?p=' + encoded + '&provider=' + currentProvider);
+}
+
+async function buildCompare(prompt, systemPrompt) {
+  const keys = {
+    claude: document.getElementById('claude-key').value.trim(),
+    openai: document.getElementById('openai-key').value.trim(),
+    gemini: document.getElementById('gemini-key').value.trim()
+  };
+  const missing = Object.entries(keys).filter(([,v]) => !v).map(([k]) => k);
+  if(missing.length) throw new Error('Please enter API keys for: ' + missing.join(', '));
+
+  setStatus('Running all 3 providers in parallel...', 'active');
+
+  const providers = [
+    { id: 'claude', name: 'Claude', fn: () => streamClaude(prompt, systemPrompt, keys.claude) },
+    { id: 'openai', name: 'GPT-4o', fn: () => streamOpenAI(prompt, systemPrompt, keys.openai) },
+    { id: 'gemini', name: 'Gemini', fn: () => callGemini(prompt, systemPrompt, keys.gemini) }
+  ];
+
+  // Reset compare UI
+  providers.forEach(p => {
+    document.getElementById(p.id + '-empty').textContent = 'generating...';
+    document.getElementById(p.id + '-empty').style.display = 'flex';
+    document.getElementById(p.id + '-preview').style.display = 'none';
+    document.getElementById(p.id + '-token-count').textContent = '...';
+  });
+
+  await Promise.allSettled(providers.map(async p => {
+    try {
+      const raw = await p.fn();
+      const html = extractHTML(raw);
+      const tokens = Math.ceil(raw.length / 4);
+      document.getElementById(p.id + '-token-count').textContent = tokens + ' tokens';
+      document.getElementById(p.id + '-empty').style.display = 'none';
+      const iframe = document.getElementById(p.id + '-preview');
+      iframe.style.display = 'block';
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      doc.open(); doc.write(html); doc.close();
+    } catch(e) {
+      document.getElementById(p.id + '-empty').textContent = 'Error: ' + e.message;
+    }
+  }));
+
+  setStatus('All 3 complete — compare the results', 'done');
+}
+
+// ── Download ───────────────────────────────────────────────────────
+function downloadApp() {
+  if(!generatedCode) return;
+  const blob = new Blob([generatedCode], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'app-' + Date.now() + '.html';
+  a.click();
+}
+
+// ── Share ──────────────────────────────────────────────────────────
+function shareApp() {
+  navigator.clipboard.writeText(location.href).then(() => {
+    const btn = document.getElementById('share-btn');
+    btn.textContent = '✓ Copied';
+    setTimeout(() => { btn.textContent = '🔗 Share'; }, 2000);
+  });
+}
+
+// ── Key toggle ─────────────────────────────────────────────────────
+function toggleKey(id) {
+  const input = document.getElementById(id);
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+// ── Load from URL ──────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  const params = new URLSearchParams(location.search);
+  if(params.get('p')) {
+    try {
+      document.getElementById('prompt').value = decodeURIComponent(atob(params.get('p')));
+    } catch {}
+  }
+  if(params.get('provider')) setProvider(params.get('provider'));
+});
+</script>
+</body>
+</html>

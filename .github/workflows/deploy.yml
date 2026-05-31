@@ -2,8 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches: [main, master]   # works with either branch name
+  workflow_dispatch:            # allow manual trigger from Actions tab
 
 permissions:
   contents: read

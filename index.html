@@ -3,164 +3,62 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>zero-code-apps — Built with skillforge-ai</title>
-<link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>zero-code-apps — AI demo platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#06080f;--bg2:#0b0f1a;--surface:#111827;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);--text:#e2e8f4;--muted:#64748b;--accent:#6366f1;--accent2:#22d3ee;--green:#10b981;--font:'Cabinet Grotesk',sans-serif;--mono:'JetBrains Mono',monospace}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh}
-nav{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 3rem;border-bottom:1px solid var(--border);background:rgba(6,8,15,0.9);backdrop-filter:blur(20px);position:sticky;top:0;z-index:50}
-.logo{font-size:1rem;font-weight:900;letter-spacing:-0.02em}.logo span{color:var(--accent)}
-.nav-right{font-family:var(--mono);font-size:0.72rem;color:var(--muted)}
-header{text-align:center;padding:6rem 2rem 4rem;position:relative;overflow:hidden}
-.header-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:300px;background:radial-gradient(ellipse,rgba(99,102,241,0.1) 0%,transparent 70%);pointer-events:none}
-.eyebrow{display:inline-flex;align-items:center;gap:0.5rem;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.25);color:var(--accent);padding:0.35rem 1rem;border-radius:100px;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1.5rem}
-h1{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:900;letter-spacing:-0.03em;margin-bottom:1rem}
-h1 span{color:var(--accent)}
-.sub{font-size:1rem;color:var(--muted);max-width:480px;margin:0 auto 2rem;line-height:1.7}
-.how-it-works{display:inline-flex;gap:0;background:var(--surface);border:1px solid var(--border2);border-radius:12px;overflow:hidden}
-.step{padding:0.6rem 1.2rem;font-size:0.8rem;color:var(--muted);border-right:1px solid var(--border);display:flex;align-items:center;gap:0.4rem}
-.step:last-child{border:none}
-.step-n{width:18px;height:18px;background:rgba(99,102,241,0.15);color:var(--accent);border-radius:50%;font-size:0.62rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-main{padding:2rem 3rem 6rem;max-width:1200px;margin:0 auto}
-.section-label{font-size:0.68rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:0.75rem}
-.section-title{font-size:1.6rem;font-weight:900;letter-spacing:-0.02em;margin-bottom:2rem}
-.demos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:1.5rem;margin-bottom:5rem}
-.demo-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;text-decoration:none;color:var(--text);display:block;transition:all 0.2s}
-.demo-card:hover{border-color:var(--border2);transform:translateY(-4px)}
-.demo-preview{height:220px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:3.5rem;position:relative;overflow:hidden;border-bottom:1px solid var(--border)}
-.preview-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(99,102,241,0.1),transparent 70%)}
-.demo-emoji{position:relative;z-index:1}
-.demo-body{padding:1.5rem}
-.demo-title{font-size:1.1rem;font-weight:900;margin-bottom:0.4rem}
-.demo-desc{font-size:0.85rem;color:var(--muted);line-height:1.6;margin-bottom:1rem}
-.demo-tags{display:flex;flex-wrap:wrap;gap:0.4rem}
-.tag{background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);color:var(--accent);padding:0.2rem 0.7rem;border-radius:5px;font-size:0.7rem;font-family:var(--mono)}
-.demo-footer{display:flex;justify-content:space-between;align-items:center;margin-top:1.2rem;padding-top:1.2rem;border-top:1px solid var(--border);font-size:0.75rem;color:var(--muted);font-family:var(--mono)}
-.view-link{color:var(--accent);font-weight:700;text-decoration:none}
-.divider{height:1px;background:var(--border);margin:2rem 0}
-.how-block{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:2rem 2.5rem;margin-bottom:3rem}
-.how-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;margin-top:1.5rem}
-.how-step{text-align:center}
-.how-num{width:40px;height:40px;border-radius:50%;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.25);color:var(--accent);font-size:1.1rem;font-weight:900;display:flex;align-items:center;justify-content:center;margin:0 auto 0.75rem}
-.how-title{font-size:0.88rem;font-weight:700;margin-bottom:0.3rem}
-.how-desc{font-size:0.78rem;color:var(--muted);line-height:1.5;font-family:var(--mono)}
-.install-box{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:1rem 1.5rem;font-family:var(--mono);font-size:0.85rem;color:var(--accent2);margin-top:1.5rem;display:flex;align-items:center;justify-content:space-between}
-.install-cmd{opacity:0.8}
-.copy-hint{font-size:0.7rem;color:var(--muted);cursor:pointer;transition:color 0.2s}
-.copy-hint:hover{color:var(--text)}
-footer{border-top:1px solid var(--border);padding:2rem 3rem;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:0.8rem}
-.footer-logo{font-weight:900;font-size:1rem;color:var(--text)}.footer-logo span{color:var(--accent)}
+:root{--bg:#070a0f;--surface:#0d1117;--surface2:#161b22;--border:#21262d;--accent:#00d4aa;--text:#e6edf3;--muted:#8b949e;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,170,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,170,0.025) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+.wrap{text-align:center;padding:40px 24px;position:relative;z-index:1;max-width:700px;width:100%;}
+.eyebrow{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:20px;}
+h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;line-height:1.1;margin-bottom:14px;}
+h1 span{color:var(--accent);}
+.sub{font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);margin-bottom:48px;line-height:1.7;}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:32px;}
+.demo-card{background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:28px 20px;text-decoration:none;transition:all .2s;display:block;}
+.demo-card:hover{border-color:var(--accent);transform:translateY(-3px);}
+.demo-card.cozy{border-color:rgba(193,127,74,0.3);}
+.demo-card.cozy:hover{border-color:#c17f4a;}
+.card-icon{font-size:32px;margin-bottom:12px;display:block;}
+.card-title{font-size:16px;font-weight:700;margin-bottom:6px;}
+.card-fintech .card-title{color:var(--accent);}
+.card-cozy .card-title{color:#c17f4a;}
+.card-desc{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.6;}
+.card-tag{display:inline-block;font-family:'DM Mono',monospace;font-size:10px;padding:3px 8px;border-radius:3px;margin-top:10px;}
+.tag-tech{background:rgba(0,212,170,0.1);color:var(--accent);border:0.5px solid rgba(0,212,170,0.3);}
+.tag-cozy{background:rgba(193,127,74,0.1);color:#c17f4a;border:0.5px solid rgba(193,127,74,0.3);}
+.links{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+.links a{color:var(--muted);text-decoration:none;margin:0 8px;}
+.links a:hover{color:var(--accent);}
+@media(max-width:480px){.cards{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
-
-<nav>
-  <div class="logo">zero<span>-code-</span>apps</div>
-  <div class="nav-right">0 lines of human code · powered by skillforge-ai</div>
-</nav>
-
-<header>
-  <div class="header-glow"></div>
-  <div class="eyebrow">open source · public demos</div>
-  <h1>Apps built with<br><span>zero human code</span></h1>
-  <p class="sub">Every app in this gallery was generated by AI following <a href="https://github.com/YOUR-USERNAME/skillforge-ai" style="color:var(--accent);text-decoration:none">skillforge-ai</a> skill files. No manual coding — just prompts and patterns.</p>
-  <div class="how-it-works">
-    <div class="step"><span class="step-n">1</span> Pick skills</div>
-    <div class="step"><span class="step-n">2</span> Write a task</div>
-    <div class="step"><span class="step-n">3</span> AI builds it</div>
-    <div class="step"><span class="step-n">4</span> Ship it</div>
-  </div>
-</header>
-
-<main>
-  <div class="section-label">Demos</div>
-  <div class="section-title">Live apps</div>
-
-  <div class="demos-grid">
-
-    <a class="demo-card" href="demos/nexvault/index.html">
-      <div class="demo-preview">
-        <div class="preview-glow"></div>
-        <span class="demo-emoji">📈</span>
-      </div>
-      <div class="demo-body">
-        <div class="demo-title">NexVault</div>
-        <div class="demo-desc">Dark premium fintech trading app — live crypto via CoinGecko API, portfolio charts, banking dashboard, stock watchlist with sparklines.</div>
-        <div class="demo-tags">
-          <span class="tag">frontend-design</span>
-          <span class="tag">chart-js</span>
-          <span class="tag">fintech-ui</span>
-          <span class="tag">api-integration</span>
-        </div>
-        <div class="demo-footer">
-          <span>4 skills · ~3 hrs · 1 prompt</span>
-          <a class="view-link" href="demos/nexvault/index.html">Open →</a>
-        </div>
-      </div>
+<div class="wrap">
+  <div class="eyebrow">zero-code-apps · AI demo platform</div>
+  <h1>Build anything<br/>with <span>AI</span></h1>
+  <p class="sub">Two demos. One for developers. One for everyone.<br/>Both powered by skillforge-ai.</p>
+  <div class="cards">
+    <a href="builder/" class="demo-card card-fintech">
+      <span class="card-icon">💹</span>
+      <div class="card-title">AI App Builder</div>
+      <div class="card-desc">Describe a fintech app. Watch Claude, GPT-4o, or Gemini stream it into a live, downloadable web app.</div>
+      <span class="card-tag tag-tech">for developers</span>
     </a>
-
-    <a class="demo-card" href="demos/pulse-analytics/index.html">
-      <div class="demo-preview" style="background:linear-gradient(135deg,#06080f 0%,#0f1629 100%)">
-        <div class="preview-glow"></div>
-        <span class="demo-emoji">📊</span>
-      </div>
-      <div class="demo-body">
-        <div class="demo-title">Pulse Analytics</div>
-        <div class="demo-desc">SaaS analytics dashboard — revenue charts, user growth, feature adoption, pricing table, and integrations page. Cabinet Grotesk + JetBrains Mono.</div>
-        <div class="demo-tags">
-          <span class="tag">frontend-design</span>
-          <span class="tag">chart-js</span>
-        </div>
-        <div class="demo-footer">
-          <span>2 skills · ~2 hrs · 1 prompt</span>
-          <a class="view-link" href="demos/pulse-analytics/index.html">Open →</a>
-        </div>
-      </div>
+    <a href="cozy/" class="demo-card card-cozy cozy">
+      <span class="card-icon">✦</span>
+      <div class="card-title">Cozy Generator</div>
+      <div class="card-desc">Describe your vibe. Get a beautiful AI image in seconds. Warm, dreamy, instantly downloadable.</div>
+      <span class="card-tag tag-cozy">for everyone</span>
     </a>
-
   </div>
-
-  <div class="divider"></div>
-
-  <div class="how-block">
-    <div class="section-label">How it works</div>
-    <div class="section-title" style="margin-bottom:0">The workflow</div>
-    <div class="how-steps">
-      <div class="how-step">
-        <div class="how-num">1</div>
-        <div class="how-title">Install skillforge-ai</div>
-        <div class="how-desc">npm install -g skillforge-ai</div>
-      </div>
-      <div class="how-step">
-        <div class="how-num">2</div>
-        <div class="how-title">Pick your skills</div>
-        <div class="how-desc">skillforge-ai list → choose what to include</div>
-      </div>
-      <div class="how-step">
-        <div class="how-num">3</div>
-        <div class="how-title">Generate a prompt</div>
-        <div class="how-desc">skillforge-ai prompt frontend-design chart-js --task "build..."</div>
-      </div>
-      <div class="how-step">
-        <div class="how-num">4</div>
-        <div class="how-title">Paste into any AI</div>
-        <div class="how-desc">Claude · ChatGPT · Gemini · Copilot → get production code</div>
-      </div>
-    </div>
-    <div class="install-box">
-      <span class="install-cmd">$ npm install -g skillforge-ai</span>
-      <span class="copy-hint" onclick="navigator.clipboard.writeText('npm install -g skillforge-ai');this.textContent='copied ✓';setTimeout(()=>this.textContent='copy',2000)">copy</span>
-    </div>
+  <div class="links">
+    <a href="https://github.com/kirti/zero-code-apps" target="_blank">github</a>
+    <a href="https://www.npmjs.com/package/skillforge-ai" target="_blank">npm</a>
+    <a href="https://www.linkedin.com/in/kirti3/" target="_blank">linkedin</a>
+    <a href="https://kirtikau.medium.com" target="_blank">medium</a>
   </div>
-
-</main>
-
-<footer>
-  <div class="footer-logo">zero<span>-code-</span>apps</div>
-  <div>GitHub Pages · MIT License</div>
-  <div>Powered by <a href="https://github.com/kirti3/skillforge-ai" style="color:var(--accent);text-decoration:none">skillforge-ai</a></div>
-</footer>
-
+</div>
 </body>
 </html>

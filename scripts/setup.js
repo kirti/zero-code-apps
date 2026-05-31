@@ -82,7 +82,7 @@ if (hasSkillpack()) {
 
   // Option B — link from local clone
   log(`${bold}Option B${reset} — link from local clone (works right now):`);
-  info(`${cyan}git clone https://github.com/YOUR-USERNAME/skillforge-ai${reset}`);
+  info(`${cyan}git clone https://github.com/kirti/skillforge-ai${reset}`);
   info(`${cyan}cd skillforge-ai && npm install && npm run build && npm link${reset}`);
   info(`${cyan}cd ../zero-code-apps${reset}    ${dim}← come back here${reset}`);
   blank();
