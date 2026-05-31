@@ -119,7 +119,7 @@ select.theme-select option{background:var(--surface2);}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 
 /* RIGHT PANEL */
-.right{display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
+.right{display:flex;flex-direction:column;overflow:hidden;background:var(--bg);height:100%;}
 
 /* TEMPLATE GALLERY */
 .gallery{flex:1;overflow-y:auto;padding:20px;}
@@ -130,8 +130,10 @@ select.theme-select option{background:var(--surface2);}
 .gallery-sub{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);line-height:1.6;}
 .template-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:24px;}
 .cat-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;margin-top:16px;}
-.tmpl-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
-.tmpl-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,212,170,0.03),transparent);opacity:0;transition:opacity .2s;}
+.tmpl-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;cursor:default;transition:all .2s;position:relative;overflow:hidden;}
+.tmpl-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,212,170,0.03),transparent);opacity:0;transition:opacity .2s;pointer-events:none;}
+.tmpl-actions{display:flex;gap:5px;position:relative;z-index:10;}
+.tmpl-btn{position:relative;z-index:11;pointer-events:auto;}
 .tmpl-card:hover{border-color:var(--accent);transform:translateY(-2px);}
 .tmpl-card:hover::before{opacity:1;}
 .tmpl-icon{font-size:24px;margin-bottom:8px;display:block;}
@@ -144,7 +146,7 @@ select.theme-select option{background:var(--surface2);}
 .tmpl-btn.preview:hover{background:rgba(63,185,80,0.1);}
 
 /* PREVIEW AREA */
-.preview-area{display:none;flex-direction:column;height:100%;}
+.preview-area{display:none;flex-direction:column;height:100%;min-height:0;flex:1;}
 .preview-area.show{display:flex;}
 .preview-topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:0.5px solid var(--border);background:var(--surface);flex-shrink:0;}
 .preview-tabs{display:flex;gap:3px;}
@@ -158,7 +160,7 @@ select.theme-select option{background:var(--surface2);}
 .pact.primary:hover{background:#00bfa0;}
 
 /* PREVIEW PANELS */
-.preview-wrap{flex:1;overflow:hidden;position:relative;}
+.preview-wrap{flex:1;overflow:hidden;position:relative;min-height:400px;}
 iframe#preview{width:100%;height:100%;border:none;background:#fff;}
 .stream-view{position:absolute;inset:0;display:none;flex-direction:column;background:var(--surface);}
 .stream-view.show{display:flex;}
@@ -555,46 +557,50 @@ function renderGallery() {
 }
 
 function previewTemplate(demoUrl, e) {
-  e.stopPropagation();
+  e && e.stopPropagation();
 
-  // Switch to preview area
-  showPreviewArea();
+  console.log('previewTemplate called:', demoUrl);
 
-  // Hide everything first
+  // Step 1: hide gallery, show preview area
+  document.getElementById('gallery').style.display = 'none';
+  const previewArea = document.getElementById('preview-area');
+  previewArea.style.display = 'flex';
+  previewArea.style.flexDirection = 'column';
+  previewArea.style.height = '100%';
+
+  // Step 2: hide all panels inside preview-wrap
   document.getElementById('empty-state').style.display = 'none';
-  document.getElementById('stream-view').classList.remove('show');
+  document.getElementById('stream-view').style.display = 'none';
   document.getElementById('code-view').style.display = 'none';
   document.getElementById('compare-wrap').style.display = 'none';
 
-  // Show iframe and load demo
+  // Step 3: show iframe with explicit styles
   const iframe = document.getElementById('preview');
   iframe.style.display = 'block';
+  iframe.style.position = 'absolute';
+  iframe.style.top = '0';
+  iframe.style.left = '0';
   iframe.style.width = '100%';
   iframe.style.height = '100%';
   iframe.style.border = 'none';
+  iframe.style.zIndex = '10';
 
-  // Set src and handle load
-  iframe.onload = () => setStatus('Preview loaded — hit Generate to customise', 'done');
-  iframe.onerror = () => {
-    // Fallback: open in new tab if iframe blocked
-    iframe.style.display = 'none';
-    document.getElementById('empty-state').style.display = 'flex';
-    document.getElementById('empty-state').innerHTML = `
-      <div class="empty-icon">🔗</div>
-      <div class="empty-title">Preview in new tab</div>
-      <div class="empty-sub" style="margin-bottom:16px;">Click to open the demo</div>
-      <a href="${demoUrl}" target="_blank" style="font-family:'DM Mono',monospace;font-size:12px;padding:8px 20px;background:var(--accent);color:#000;border-radius:6px;text-decoration:none;">Open demo →</a>
-    `;
-  };
+  // Step 4: load the URL
   iframe.src = demoUrl;
+  iframe.onload = () => {
+    console.log('iframe loaded:', demoUrl);
+    setStatus('✓ Preview loaded', 'done');
+  };
 
-  // Switch to preview tab
+  // Step 5: update tabs
   ['preview','code','stream','compare'].forEach(t => {
-    document.getElementById('ptab-' + t)?.classList.remove('active');
+    document.getElementById('ptab-'+t)?.classList.remove('active');
   });
   document.getElementById('ptab-preview')?.classList.add('active');
 
   setStatus('Loading preview...', 'active');
+  console.log('preview-area display:', previewArea.style.display);
+  console.log('preview-wrap height:', document.getElementById('preview-wrap').offsetHeight);
 }
 
 function selectTemplate(prompt, e) {
