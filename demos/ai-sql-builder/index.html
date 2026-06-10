@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI SQL Builder — ML+LLM Pipeline — skillforge-ai</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#080c12;--bg2:#0d1420;--surface:#141e30;--surface2:#1a2640;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);--text:#e8edf5;--muted:#6b7a99;--accent:#58a6ff;--green:#3fb950;--amber:#f0883e;--purple:#a78bfa;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    nav{height:48px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;}
+    .nav-logo{font-weight:800;font-size:0.95rem;color:var(--accent);}
+    .nav-badge{font-family:'DM Mono',monospace;font-size:0.65rem;background:rgba(88,166,255,0.1);color:var(--accent);border:1px solid rgba(88,166,255,0.2);padding:2px 8px;border-radius:4px;}
+    .pb{font-family:'DM Mono',monospace;font-size:0.62rem;padding:2px 8px;border-radius:4px;border:1px solid;background:rgba(88,166,255,0.08);color:var(--accent);border-color:rgba(88,166,255,0.2);}
+    .container{max-width:1000px;margin:0 auto;padding:32px 24px;}
+    h1{font-size:1.8rem;font-weight:800;margin-bottom:6px;}
+    .subtitle{font-size:0.85rem;color:var(--muted);margin-bottom:20px;line-height:1.6;}
+    .schema-bar{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:16px;margin-bottom:16px;}
+    .schema-label{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:10px;}
+    .tables{display:flex;gap:10px;flex-wrap:wrap;}
+    .table-chip{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--text);cursor:pointer;transition:all .2s;}
+    .table-chip:hover{border-color:var(--accent);}
+    .table-chip.active{border-color:var(--accent);background:rgba(88,166,255,0.08);}
+    .table-cols{font-size:0.65rem;color:var(--muted);margin-top:3px;}
+    .input-section{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:16px;margin-bottom:16px;}
+    .nl-input{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Syne',sans-serif;font-size:0.9rem;padding:12px 14px;border-radius:8px;outline:none;transition:border-color .2s;}
+    .nl-input:focus{border-color:var(--accent);}
+    .examples{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+    .ex-btn{font-size:0.7rem;padding:4px 10px;background:var(--surface2);border:1px solid var(--border2);color:var(--muted);border-radius:6px;cursor:pointer;transition:all .2s;}
+    .ex-btn:hover{color:var(--text);border-color:var(--accent);}
+    .actions{display:flex;gap:10px;margin-top:14px;align-items:center;}
+    .btn{padding:9px 22px;border-radius:8px;font-family:'Syne',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;border:none;transition:all .2s;}
+    .btn-primary{background:var(--accent);color:#080c12;}
+    .btn-primary:hover{background:#4090e0;}
+    .btn-primary:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed;}
+    .complexity-badge{font-family:'DM Mono',monospace;font-size:0.68rem;padding:3px 10px;border-radius:4px;}
+    .cx-simple{background:rgba(63,185,80,0.1);color:var(--green);}
+    .cx-medium{background:rgba(240,136,62,0.1);color:var(--amber);}
+    .cx-complex{background:rgba(255,71,87,0.1);color:#ff4757;}
+
+    /* Pipeline visualiser */
+    .pipeline{display:flex;align-items:center;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+    .pipe-step{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--muted);transition:all .3s;}
+    .pipe-step.active{border-color:var(--accent);color:var(--accent);background:rgba(88,166,255,0.08);}
+    .pipe-step.done{border-color:var(--green);color:var(--green);background:rgba(63,185,80,0.06);}
+    .pipe-arrow{color:var(--muted);font-size:0.8rem;}
+
+    /* Output */
+    .output-section{background:var(--surface);border:1px solid var(--border2);border-radius:12px;overflow:hidden;}
+    .output-tabs{display:flex;border-bottom:1px solid var(--border);}
+    .otab{padding:10px 16px;font-size:0.78rem;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:all .2s;}
+    .otab.active{color:var(--accent);border-bottom-color:var(--accent);}
+    .tab-content{padding:16px;}
+    .sql-block{background:var(--bg);border-radius:8px;padding:14px;position:relative;}
+    .sql-code{font-family:'DM Mono',monospace;font-size:0.82rem;color:#e8c99a;line-height:1.8;white-space:pre;}
+    .sql-keyword{color:#58a6ff;}
+    .sql-string{color:#a5d6ff;}
+    .sql-comment{color:#6b7a99;}
+    .copy-sql{position:absolute;top:10px;right:10px;font-size:0.68rem;padding:4px 10px;background:var(--surface2);border:1px solid var(--border2);color:var(--muted);border-radius:5px;cursor:pointer;}
+    .copy-sql:hover{color:var(--text);}
+    .explanation-text{font-size:0.85rem;color:var(--text);line-height:1.75;}
+    .cursor{display:inline-block;width:2px;height:13px;background:var(--accent);margin-left:1px;vertical-align:middle;animation:blink 1s infinite;}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+    .result-meta{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+    .meta-pill{font-family:'DM Mono',monospace;font-size:0.65rem;padding:3px 8px;border-radius:4px;background:var(--surface2);color:var(--muted);}
+    .warning-box{background:rgba(240,136,62,0.06);border:1px solid rgba(240,136,62,0.15);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:0.78rem;color:var(--amber);line-height:1.6;}
+    .loading-bar{height:2px;background:var(--surface2);border-radius:1px;overflow:hidden;}
+    .loading-progress{height:100%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:1px;animation:prog 1.5s ease-in-out infinite;}
+    @keyframes prog{0%{width:0%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}
+    .empty-state{padding:40px;text-align:center;color:var(--muted);}
+    .empty-state .icon{font-size:2.2rem;margin-bottom:8px;}
+    .pipe-explainer{font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--muted);background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:16px;line-height:1.6;}
+    .pipe-explainer strong{color:var(--accent);}
+  </style>
+</head>
+<body>
+
+<nav>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="nav-logo">AI SQL Builder</span>
+    <span class="nav-badge">llm-integration · ML + LLM pipeline</span>
+  </div>
+  <span class="pb">🔬 ML+LLM Pipeline</span>
+</nav>
+
+<div class="container">
+  <h1>AI SQL Query Builder</h1>
+  <p class="subtitle">Type in plain English → get valid SQL + explanation.<br>Demonstrates <strong>Pattern 5 (ML+LLM pipeline)</strong> — intent classification (ML) then query generation (LLM).</p>
+
+  <div class="pipe-explainer">
+    <strong>Pipeline:</strong> Step 1 — ML classifier detects query intent and complexity (SELECT / JOIN / AGGREGATE / SUBQUERY). Step 2 — LLM receives the intent as context and generates the correct SQL. Two separate models, working together. The ML step makes the LLM more accurate and gives you explainable routing.
+  </div>
+
+  <!-- Schema -->
+  <div class="schema-bar">
+    <div class="schema-label">Database Schema — click a table to see columns</div>
+    <div class="tables" id="tables"></div>
+  </div>
+
+  <!-- Pipeline visualiser -->
+  <div class="pipeline">
+    <div class="pipe-step" id="ps1">1. Parse intent</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" id="ps2">2. Classify complexity</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" id="ps3">3. Build context</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" id="ps4">4. Generate SQL</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" id="ps5">5. Stream explanation</div>
+  </div>
+
+  <!-- Input -->
+  <div class="input-section">
+    <input class="nl-input" id="nlInput" placeholder="e.g. Show me the top 10 customers by total order value in the last 30 days">
+    <div class="examples">
+      <span style="font-size:0.7rem;color:var(--muted);margin-right:4px;">Try:</span>
+      <button class="ex-btn" onclick="useExample(this.dataset.q)" data-q="Show all users who signed up in the last 7 days">Recent signups</button>
+      <button class="ex-btn" onclick="useExample(this.dataset.q)" data-q="Top 10 products by revenue this month">Top products</button>
+      <button class="ex-btn" onclick="useExample(this.dataset.q)" data-q="Find users who placed more than 5 orders but never left a review">Inactive reviewers</button>
+      <button class="ex-btn" onclick="useExample(this.dataset.q)" data-q="Monthly revenue trend for the past year grouped by product category">Revenue trend</button>
+      <button class="ex-btn" onclick="useExample(this.dataset.q)" data-q="Users who have items in their cart but haven't completed a purchase in 48 hours">Abandoned carts</button>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" id="buildBtn" onclick="buildSQL()">⚡ Build SQL</button>
+      <div id="complexityBadge"></div>
+    </div>
+  </div>
+
+  <!-- Output -->
+  <div class="output-section" id="outputSection">
+    <div class="empty-state">
+      <div class="icon">🗄️</div>
+      <div style="font-size:0.85rem;">SQL query appears here</div>
+      <div style="font-size:0.75rem;margin-top:4px;max-width:280px;line-height:1.6;">Type a question in plain English or click one of the example queries above</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SCHEMA = {
+  users:    { cols: 'id, email, name, created_at, plan, country' },
+  orders:   { cols: 'id, user_id, total, status, created_at, completed_at' },
+  products: { cols: 'id, name, category, price, stock, created_at' },
+  order_items: { cols: 'id, order_id, product_id, quantity, unit_price' },
+  reviews:  { cols: 'id, user_id, product_id, rating, body, created_at' },
+  carts:    { cols: 'id, user_id, product_id, quantity, added_at' },
+};
+
+// Render schema chips
+const tablesEl = document.getElementById('tables');
+Object.entries(SCHEMA).forEach(([name, { cols }]) => {
+  const chip = document.createElement('div');
+  chip.className = 'table-chip';
+  chip.innerHTML = `<div>${name}</div><div class="table-cols">${cols}</div>`;
+  tablesEl.appendChild(chip);
+});
+
+// ML-style intent classifier (pattern 5 — the ML step)
+function classifyIntent(query) {
+  const q = query.toLowerCase();
+  const hasJoin = q.includes('who') || q.includes('customer') || q.includes('user') || q.includes('order');
+  const hasAgg = q.includes('total') || q.includes('count') || q.includes('average') || q.includes('top') || q.includes('revenue') || q.includes('sum');
+  const hasSub = q.includes('never') || q.includes('without') || q.includes("haven't") || q.includes('but not');
+  const hasTime = q.includes('last') || q.includes('month') || q.includes('week') || q.includes('day') || q.includes('year') || q.includes('hour');
+
+  let complexity = 'simple';
+  if (hasSub) complexity = 'complex';
+  else if (hasJoin && hasAgg) complexity = 'medium';
+  else if (hasJoin || hasAgg) complexity = 'medium';
+
+  let type = 'SELECT';
+  if (hasAgg && hasTime) type = 'AGGREGATE + TIME FILTER';
+  else if (hasSub) type = 'SUBQUERY / NOT EXISTS';
+  else if (hasJoin && hasAgg) type = 'JOIN + AGGREGATE';
+  else if (hasJoin) type = 'JOIN';
+  else if (hasAgg) type = 'AGGREGATE';
+
+  return { type, complexity, hasJoin, hasAgg, hasSub, hasTime };
+}
+
+// SQL templates (pattern 5 — the LLM step output, simulated)
+const SQL_TEMPLATES = {
+  'recent': {
+    sql: `SELECT\n  id,\n  name,\n  email,\n  created_at,\n  plan\nFROM users\nWHERE created_at >= NOW() - INTERVAL '7 days'\nORDER BY created_at DESC;`,
+    explanation: 'This simple SELECT query filters the users table using a date comparison. The INTERVAL function calculates 7 days before the current timestamp. Results are ordered newest first so you see the most recent signups at the top.',
+    tables: ['users'], rows: '~50-500'
+  },
+  'top': {
+    sql: `SELECT\n  p.name AS product,\n  p.category,\n  SUM(oi.quantity * oi.unit_price) AS revenue,\n  COUNT(DISTINCT o.id) AS orders\nFROM products p\nJOIN order_items oi ON p.id = oi.product_id\nJOIN orders o ON oi.order_id = o.id\nWHERE o.created_at >= DATE_TRUNC('month', NOW())\n  AND o.status = 'completed'\nGROUP BY p.id, p.name, p.category\nORDER BY revenue DESC\nLIMIT 10;`,
+    explanation: 'This JOIN + AGGREGATE query combines three tables: products, order_items, and orders. The GROUP BY aggregates revenue and order count per product. DATE_TRUNC truncates to the start of the current month. Only completed orders are counted to avoid inflating revenue with pending or cancelled orders.',
+    tables: ['products', 'order_items', 'orders'], rows: '~10'
+  },
+  'inactive': {
+    sql: `SELECT\n  u.id,\n  u.name,\n  u.email,\n  COUNT(o.id) AS total_orders\nFROM users u\nJOIN orders o ON u.id = o.user_id\nWHERE NOT EXISTS (\n  SELECT 1 FROM reviews r\n  WHERE r.user_id = u.id\n)\nGROUP BY u.id, u.name, u.email\nHAVING COUNT(o.id) > 5\nORDER BY total_orders DESC;`,
+    explanation: 'This complex query uses a NOT EXISTS subquery — the ML classifier correctly identified this as a SUBQUERY type. The subquery checks whether each user has any reviews. HAVING filters after aggregation (unlike WHERE which filters before). This pattern is efficient because the NOT EXISTS stops checking as soon as it finds a match.',
+    tables: ['users', 'orders', 'reviews'], rows: '~100-1000'
+  },
+  'trend': {
+    sql: `SELECT\n  DATE_TRUNC('month', o.created_at) AS month,\n  p.category,\n  SUM(oi.quantity * oi.unit_price) AS revenue,\n  COUNT(DISTINCT o.id) AS orders\nFROM orders o\nJOIN order_items oi ON o.id = oi.order_id\nJOIN products p ON oi.product_id = p.id\nWHERE o.created_at >= NOW() - INTERVAL '12 months'\n  AND o.status = 'completed'\nGROUP BY DATE_TRUNC('month', o.created_at), p.category\nORDER BY month, revenue DESC;`,
+    explanation: 'This time-series aggregation groups data by both month and category simultaneously. DATE_TRUNC groups all timestamps within the same month together. The result gives you a grid of month × category revenue — ideal for building a stacked bar chart or trend line per category.',
+    tables: ['orders', 'order_items', 'products'], rows: '~120'
+  },
+  'cart': {
+    sql: `SELECT\n  u.id,\n  u.name,\n  u.email,\n  COUNT(c.id) AS items_in_cart,\n  SUM(c.quantity * p.price) AS cart_value\nFROM users u\nJOIN carts c ON u.id = c.user_id\nJOIN products p ON c.product_id = p.id\nWHERE c.added_at <= NOW() - INTERVAL '48 hours'\n  AND NOT EXISTS (\n    SELECT 1 FROM orders o\n    WHERE o.user_id = u.id\n      AND o.created_at > NOW() - INTERVAL '48 hours'\n  )\nGROUP BY u.id, u.name, u.email\nHAVING SUM(c.quantity * p.price) > 0\nORDER BY cart_value DESC;`,
+    explanation: 'This abandoned cart query combines a time-based filter with a NOT EXISTS subquery. It finds users whose cart was last updated over 48 hours ago AND who have not placed any order in the same period. The cart_value calculation multiplies items by current product price — useful for prioritising high-value abandoned carts for re-engagement campaigns.',
+    tables: ['users', 'carts', 'products', 'orders'], rows: '~500-5000'
+  },
+  'default': {
+    sql: `SELECT\n  u.id,\n  u.name,\n  u.email,\n  COUNT(o.id) AS order_count,\n  SUM(o.total) AS lifetime_value\nFROM users u\nLEFT JOIN orders o ON u.id = o.user_id\nWHERE o.status = 'completed'\nGROUP BY u.id, u.name, u.email\nORDER BY lifetime_value DESC\nLIMIT 10;`,
+    explanation: 'This query joins users and orders to calculate each customer\'s lifetime value. A LEFT JOIN is used so users with no orders still appear in the result. The GROUP BY aggregates per user, and ORDER BY lifetime_value DESC puts the most valuable customers first.',
+    tables: ['users', 'orders'], rows: '~10'
+  }
+};
+
+function getTemplate(query) {
+  const q = query.toLowerCase();
+  if (q.includes('sign') || q.includes('recent') || q.includes('7 day')) return SQL_TEMPLATES.recent;
+  if (q.includes('top') && q.includes('product')) return SQL_TEMPLATES.top;
+  if (q.includes('never') || q.includes('review')) return SQL_TEMPLATES.inactive;
+  if (q.includes('trend') || q.includes('monthly') || q.includes('past year')) return SQL_TEMPLATES.trend;
+  if (q.includes('cart') || q.includes('abandon')) return SQL_TEMPLATES.cart;
+  return SQL_TEMPLATES.default;
+}
+
+async function buildSQL() {
+  const query = document.getElementById('nlInput').value.trim();
+  if (!query) return;
+
+  const btn = document.getElementById('buildBtn');
+  btn.disabled = true;
+  btn.textContent = 'Building...';
+
+  // Pipeline step 1+2: ML classification
+  const steps = ['ps1','ps2','ps3','ps4','ps5'];
+  steps.forEach(s => document.getElementById(s).className = 'pipe-step');
+
+  for (let i = 0; i < steps.length; i++) {
+    document.getElementById(steps[i]).className = 'pipe-step active';
+    await new Promise(r => setTimeout(r, 220));
+    if (i > 0) document.getElementById(steps[i-1]).className = 'pipe-step done';
+  }
+
+  const intent = classifyIntent(query);
+  const template = getTemplate(query);
+
+  // Show complexity badge
+  const cxColors = { simple: 'cx-simple', medium: 'cx-medium', complex: 'cx-complex' };
+  document.getElementById('complexityBadge').innerHTML =
+    `<span class="complexity-badge ${cxColors[intent.complexity]}">${intent.type} · ${intent.complexity}</span>`;
+
+  // Format SQL with syntax highlighting
+  const highlighted = template.sql
+    .replace(/\b(SELECT|FROM|WHERE|JOIN|LEFT JOIN|GROUP BY|ORDER BY|HAVING|AND|OR|NOT|EXISTS|ON|AS|LIMIT|COUNT|SUM|AVG|DISTINCT|DATE_TRUNC|NOW|INTERVAL|DESC|ASC)\b/g,
+      '<span class="sql-keyword">$1</span>');
+
+  document.getElementById('outputSection').innerHTML = `
+    <div class="output-tabs">
+      <div class="otab active" onclick="switchTab(this,'sql')">SQL Query</div>
+      <div class="otab" onclick="switchTab(this,'explain')">Explanation</div>
+    </div>
+    <div id="tab-sql" class="tab-content">
+      <div class="result-meta">
+        <span class="meta-pill">Tables: ${template.tables.join(', ')}</span>
+        <span class="meta-pill">~${template.rows} rows</span>
+        <span class="meta-pill">${intent.type}</span>
+      </div>
+      <div class="sql-block">
+        <button class="copy-sql" onclick="copySQL()">Copy</button>
+        <div class="sql-code">${highlighted}</div>
+      </div>
+      ${intent.complexity === 'complex' ? `<div class="warning-box">⚠️ Complex query detected — test on a small dataset first and add appropriate indexes on join columns and date fields.</div>` : ''}
+    </div>
+    <div id="tab-explain" class="tab-content" style="display:none;">
+      <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:10px;">🤖 AI Explanation — streaming</div>
+      <div class="explanation-text" id="explanationText"><span class="cursor"></span></div>
+    </div>`;
+
+  document.getElementById(steps[steps.length-1]).className = 'pipe-step done';
+
+  // Stream explanation in background
+  const el = document.getElementById('explanationText');
+  let displayed = '';
+  for (const word of template.explanation.split(' ')) {
+    displayed += (displayed ? ' ' : '') + word;
+    el.innerHTML = displayed + '<span class="cursor"></span>';
+    await new Promise(r => setTimeout(r, 28));
+  }
+  el.textContent = displayed;
+
+  btn.disabled = false;
+  btn.textContent = '⚡ Build SQL';
+}
+
+function switchTab(tab, name) {
+  document.querySelectorAll('.otab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('tab-sql').style.display = name === 'sql' ? 'block' : 'none';
+  document.getElementById('tab-explain').style.display = name === 'explain' ? 'block' : 'none';
+}
+
+function useExample(q) {
+  document.getElementById('nlInput').value = q;
+}
+
+function copySQL() {
+  const sql = document.querySelector('.sql-code').textContent;
+  navigator.clipboard.writeText(sql).then(() => {
+    const btn = document.querySelector('.copy-sql');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+</script>
+</body>
+</html>

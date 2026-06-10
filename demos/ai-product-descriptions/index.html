@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Product Descriptions — n:5 Parallel — skillforge-ai</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#080c12;--bg2:#0d1420;--surface:#141e30;--surface2:#1a2640;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);--text:#e8edf5;--muted:#6b7a99;--accent:#f0883e;--blue:#58a6ff;--green:#3fb950;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    nav{height:48px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;}
+    .nav-logo{font-weight:800;font-size:0.95rem;color:var(--accent);}
+    .nav-badge{font-family:'DM Mono',monospace;font-size:0.65rem;background:rgba(240,136,62,0.1);color:var(--accent);border:1px solid rgba(240,136,62,0.2);padding:2px 8px;border-radius:4px;}
+    .pb{font-family:'DM Mono',monospace;font-size:0.62rem;padding:2px 8px;border-radius:4px;border:1px solid;background:rgba(240,136,62,0.08);color:var(--accent);border-color:rgba(240,136,62,0.2);}
+    .container{max-width:1100px;margin:0 auto;padding:32px 24px;}
+    h1{font-size:1.8rem;font-weight:800;margin-bottom:6px;}
+    .subtitle{font-size:0.85rem;color:var(--muted);margin-bottom:28px;line-height:1.6;}
+    .input-section{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:24px;margin-bottom:24px;}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+    .field label{display:block;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:6px;}
+    .field input,.field select,.field textarea{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Syne',sans-serif;font-size:0.85rem;padding:9px 12px;border-radius:8px;outline:none;transition:border-color .2s;}
+    .field input:focus,.field textarea:focus{border-color:var(--accent);}
+    .field textarea{min-height:80px;resize:vertical;}
+    .tone-grid{display:flex;gap:8px;flex-wrap:wrap;}
+    .tone-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-size:0.75rem;cursor:pointer;transition:all .2s;}
+    .tone-btn.active{background:rgba(240,136,62,0.15);border-color:var(--accent);color:var(--accent);}
+    .btn{padding:10px 24px;border-radius:8px;font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;border:none;transition:all .2s;}
+    .btn-primary{background:var(--accent);color:#080c12;}
+    .btn-primary:hover{background:#e07020;}
+    .btn-primary:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed;}
+    .n5-explainer{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted);background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:20px;line-height:1.6;}
+    .n5-explainer strong{color:var(--accent);}
+    .results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+    .result-card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;overflow:hidden;transition:all .25s;cursor:pointer;}
+    .result-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+    .result-card.selected{border-color:var(--accent);box-shadow:0 0 0 2px rgba(240,136,62,0.2);}
+    .card-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .card-num{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);}
+    .card-tone{font-size:0.65rem;padding:2px 7px;border-radius:4px;background:rgba(240,136,62,0.1);color:var(--accent);}
+    .card-body{padding:14px;}
+    .card-title{font-size:0.9rem;font-weight:700;color:var(--text);margin-bottom:6px;}
+    .card-desc{font-size:0.82rem;color:var(--muted);line-height:1.7;}
+    .card-footer{padding:10px 14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+    .copy-btn{font-size:0.7rem;padding:4px 10px;background:var(--surface2);border:1px solid var(--border2);color:var(--muted);border-radius:6px;cursor:pointer;transition:all .2s;}
+    .copy-btn:hover{color:var(--text);border-color:var(--accent);}
+    .word-count{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);}
+    .loading-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+    .loading-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;animation:pulse 1.5s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{opacity:0.6}50%{opacity:1}}
+    .loading-line{height:12px;background:var(--surface2);border-radius:4px;margin-bottom:8px;}
+    .api-note{background:rgba(240,136,62,0.06);border:1px solid rgba(240,136,62,0.15);border-radius:10px;padding:12px 16px;margin-top:16px;font-size:0.78rem;color:var(--muted);line-height:1.65;}
+    .api-note code{font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--accent);}
+  </style>
+</head>
+<body>
+
+<nav>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="nav-logo">Product Description Generator</span>
+    <span class="nav-badge">llm-integration · n:5 parallel completions</span>
+  </div>
+  <span class="pb">🔀 n:5 Parallel</span>
+</nav>
+
+<div class="container">
+  <h1>AI Product Descriptions</h1>
+  <p class="subtitle">Enter product details → get 5 different descriptions in one API call.<br>Demonstrates <strong>Pattern 4 (n:5 parallel completions)</strong> from the llm-integration skill — one request, five variations.</p>
+
+  <div class="n5-explainer">
+    <strong>How n:5 works:</strong> Instead of 5 separate API calls (5× the latency, 5× the request overhead), a single call with <code style="color:var(--accent);">n: 5</code> returns 5 completions simultaneously. You get variety at the cost of 5× output tokens — but only 1× input tokens. All 5 descriptions are generated in parallel at the LLM level.
+  </div>
+
+  <div class="input-section">
+    <div class="form-grid">
+      <div class="field">
+        <label>Product Name</label>
+        <input id="productName" placeholder="e.g. ProDesk Standing Desk" value="ProDesk Standing Desk Pro">
+      </div>
+      <div class="field">
+        <label>Category</label>
+        <input id="category" placeholder="e.g. Office Furniture" value="Office Furniture">
+      </div>
+      <div class="field" style="grid-column:1/-1;">
+        <label>Key Features (comma separated)</label>
+        <input id="features" placeholder="e.g. height adjustable, memory presets, built-in USB" value="electric height adjustment, 4 memory presets, cable management tray, anti-collision sensor, 10 year warranty">
+      </div>
+      <div class="field" style="grid-column:1/-1;">
+        <label>Target Audience</label>
+        <input id="audience" placeholder="e.g. remote workers, home office" value="remote workers, developers, designers working long hours">
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:16px;">
+      <label>Tone Variations (generates one of each selected)</label>
+      <div class="tone-grid" id="toneGrid">
+        <button class="tone-btn active" onclick="toggleTone(this,'professional')">Professional</button>
+        <button class="tone-btn active" onclick="toggleTone(this,'casual')">Casual & Friendly</button>
+        <button class="tone-btn active" onclick="toggleTone(this,'technical')">Technical</button>
+        <button class="tone-btn active" onclick="toggleTone(this,'emotional')">Emotional</button>
+        <button class="tone-btn active" onclick="toggleTone(this,'minimal')">Ultra Short</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="generateBtn" onclick="generate()">⚡ Generate 5 Variations</button>
+  </div>
+
+  <div id="resultsSection"></div>
+</div>
+
+<script>
+let activeTones = new Set(['professional','casual','technical','emotional','minimal']);
+
+function toggleTone(btn, tone) {
+  btn.classList.toggle('active');
+  if (activeTones.has(tone)) activeTones.delete(tone);
+  else activeTones.add(tone);
+}
+
+const DESCRIPTIONS = {
+  professional: {
+    title: 'Elevate Your Workspace with ProDesk Standing Desk Pro',
+    desc: 'The ProDesk Standing Desk Pro is engineered for professionals who demand both performance and longevity. Featuring whisper-quiet electric height adjustment, four programmable memory presets, and an integrated cable management system, it transforms your workspace into a precision-crafted productivity environment. Backed by a 10-year warranty, this is an investment in your long-term health and performance.'
+  },
+  casual: {
+    title: 'Your back will thank you. Seriously.',
+    desc: "We know what it's like to spend 10 hours hunched over a laptop. The ProDesk Pro fixes that. Hit one button, it adjusts to your perfect standing height in seconds. Set your four favourite positions, forget about it. The cable tray keeps your desk clean. The anti-collision sensor stops it from crushing your laptop. It just works, every single day."
+  },
+  technical: {
+    title: 'ProDesk Standing Desk Pro — Technical Specifications',
+    desc: 'Electric dual-motor lifting system with 4-position memory presets and anti-collision detection. Integrated cable management tray with 3 cable routing channels. Height range: 24"–50". Lift speed: 1.5"/sec. Load capacity: 275lbs. Noise level: <45dB. Controller: digital with USB-A (5V/1A) charging port. Frame warranty: 10 years. Motor warranty: 5 years.'
+  },
+  emotional: {
+    title: 'Your best work starts when you feel your best',
+    desc: "Chronic back pain. Afternoon energy crashes. The feeling that you should be doing more, but your body won't cooperate. The ProDesk Pro was designed for the hours when you're pushing through. When you can stand, you think more clearly. When you're comfortable, you create more freely. This desk doesn't just adjust — it adapts to you, so you can focus on what matters."
+  },
+  minimal: {
+    title: 'Stand. Sit. Repeat.',
+    desc: 'ProDesk Pro. Electric height adjustment. 4 memory presets. 10-year warranty. Your health is worth it.'
+  }
+};
+
+async function generate() {
+  const name = document.getElementById('productName').value;
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  btn.textContent = 'Generating 5 in parallel...';
+
+  const section = document.getElementById('resultsSection');
+  section.innerHTML = `
+    <div class="loading-grid">
+      ${[1,2,3,4,5].map(i => `
+        <div class="loading-card">
+          <div class="loading-line" style="width:60%;height:14px;"></div>
+          <div class="loading-line" style="margin-top:12px;"></div>
+          <div class="loading-line" style="width:85%;"></div>
+          <div class="loading-line" style="width:70%;"></div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);margin-top:8px;">Generating variation ${i}...</div>
+        </div>`).join('')}
+    </div>
+    <div style="text-align:center;font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted);margin-top:12px;">
+      1 API call · n:5 · all generating simultaneously
+    </div>`;
+
+  // Simulate the n:5 parallel generation timing
+  await new Promise(r => setTimeout(r, 1200));
+
+  const tones = [...activeTones].slice(0, 5);
+  const results = tones.map(tone => ({
+    tone,
+    ...DESCRIPTIONS[tone] || DESCRIPTIONS.professional
+  }));
+
+  section.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div style="font-size:0.8rem;color:var(--text);">5 variations generated <span style="color:var(--green);font-family:'DM Mono',monospace;">✓ in 1 API call</span></div>
+      <div style="font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--muted);">Click a card to select · Click copy to grab text</div>
+    </div>
+    <div class="results-grid">
+      ${results.map((r, i) => `
+        <div class="result-card" onclick="selectCard(this)">
+          <div class="card-header">
+            <span class="card-num">Variation ${i+1}</span>
+            <span class="card-tone">${r.tone}</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">${r.title}</div>
+            <div class="card-desc">${r.desc}</div>
+          </div>
+          <div class="card-footer">
+            <span class="word-count">${r.desc.split(' ').length} words</span>
+            <button class="copy-btn" onclick="copyText(event,'${r.title}\\n\\n${r.desc}')">Copy</button>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="api-note">
+      <strong style="color:var(--accent);">Production pattern:</strong> In a real app using the llm-integration skill, this calls <code>openai.chat.completions.create({ n: 5, ... })</code> — one request returns all 5 variations. Cache all 5 to serve different users different descriptions without additional API calls.
+    </div>`;
+
+  btn.disabled = false;
+  btn.textContent = '⚡ Generate 5 Variations';
+}
+
+function selectCard(card) {
+  document.querySelectorAll('.result-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+}
+
+function copyText(e, text) {
+  e.stopPropagation();
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = e.target;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+</script>
+</body>
+</html>

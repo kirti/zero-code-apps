@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Document Summariser — skillforge-ai llm-integration</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#080c12;--bg2:#0d1420;--surface:#141e30;--surface2:#1a2640;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);--text:#e8edf5;--muted:#6b7a99;--accent:#00d4aa;--red:#ff4757;--amber:#f0883e;--green:#3fb950;--blue:#58a6ff;--purple:#a78bfa;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    nav{height:48px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;}
+    .nav-logo{font-weight:800;font-size:0.95rem;color:var(--purple);}
+    .nav-badge{font-family:'DM Mono',monospace;font-size:0.65rem;background:rgba(167,139,250,0.1);color:var(--purple);border:1px solid rgba(167,139,250,0.2);padding:2px 8px;border-radius:4px;}
+    .pb{font-family:'DM Mono',monospace;font-size:0.62rem;padding:2px 8px;border-radius:4px;border:1px solid;}
+    .pb-purple{background:rgba(167,139,250,0.08);color:var(--purple);border-color:rgba(167,139,250,0.2);}
+    .container{max-width:1100px;margin:0 auto;padding:32px 24px;}
+    h1{font-size:1.8rem;font-weight:800;margin-bottom:6px;}
+    .subtitle{font-size:0.85rem;color:var(--muted);margin-bottom:28px;line-height:1.6;}
+    .layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+    .panel{background:var(--surface);border:1px solid var(--border2);border-radius:14px;overflow:hidden;}
+    .panel-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .panel-title{font-size:0.78rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);}
+    textarea{width:100%;min-height:320px;background:var(--bg);border:none;color:var(--text);font-family:'Syne',sans-serif;font-size:0.85rem;line-height:1.8;padding:16px;outline:none;resize:vertical;}
+    .actions{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+    .btn{padding:8px 18px;border-radius:8px;font-family:'Syne',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
+    .btn-primary{background:var(--purple);color:#fff;}
+    .btn-primary:hover{background:#9166f0;}
+    .btn-primary:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed;}
+    .btn-ghost{background:var(--surface2);color:var(--muted);border:1px solid var(--border2);font-size:0.72rem;padding:5px 10px;}
+    .btn-ghost:hover{color:var(--text);}
+    .result-area{padding:18px;}
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:320px;color:var(--muted);gap:8px;}
+    .empty-icon{font-size:2.5rem;}
+
+    /* Result components */
+    .summary-hero{background:var(--bg2);border-radius:10px;padding:16px;margin-bottom:14px;}
+    .summary-label{font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;}
+    .summary-text{font-size:0.9rem;color:var(--text);line-height:1.75;}
+    .cursor{display:inline-block;width:2px;height:14px;background:var(--purple);margin-left:1px;vertical-align:middle;animation:blink 1s infinite;}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+    .key-points{margin-bottom:14px;}
+    .section-label{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:8px;}
+    .point{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);}
+    .point:last-child{border-bottom:none;}
+    .point-num{font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--purple);min-width:20px;margin-top:2px;}
+    .point-text{font-size:0.83rem;color:var(--text);line-height:1.65;}
+
+    .meta-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
+    .meta-card{background:var(--surface2);border-radius:8px;padding:10px 12px;text-align:center;}
+    .meta-val{font-family:'DM Mono',monospace;font-size:1rem;font-weight:600;margin-bottom:2px;}
+    .meta-lbl{font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;}
+
+    /* Sentiment */
+    .sentiment-bar{background:var(--bg2);border-radius:10px;padding:14px;margin-bottom:14px;}
+    .sent-label{font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;}
+    .sent-track{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;margin-bottom:6px;}
+    .sent-fill{height:100%;border-radius:4px;transition:width 1s ease-out;}
+    .sent-labels{display:flex;justify-content:space-between;font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;}
+
+    /* Tags */
+    .tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;}
+    .tag{font-size:0.7rem;padding:3px 10px;border-radius:12px;background:rgba(167,139,250,0.08);color:var(--purple);border:1px solid rgba(167,139,250,0.2);}
+
+    .loading-bar{height:2px;background:var(--surface2);border-radius:1px;overflow:hidden;margin-bottom:12px;}
+    .loading-progress{height:100%;background:linear-gradient(90deg,var(--purple),var(--blue));border-radius:1px;animation:prog 2s ease-in-out infinite;}
+    @keyframes prog{0%{width:0%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}
+    @media(max-width:800px){.layout{grid-template-columns:1fr;}.meta-row{grid-template-columns:1fr 1fr;}}
+  </style>
+</head>
+<body>
+
+<nav>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="nav-logo">AI Doc Summariser</span>
+    <span class="nav-badge">llm-integration · structured JSON output</span>
+  </div>
+  <div style="display:flex;gap:6px;">
+    <span class="pb pb-purple">📋 Structured JSON</span>
+    <span class="pb pb-purple">⚡ Streaming</span>
+  </div>
+</nav>
+
+<div class="container">
+  <h1>AI Document Summariser</h1>
+  <p class="subtitle">Paste any document → get structured JSON output: summary, key points, sentiment, topics, and reading stats.<br>Demonstrates <strong>Pattern 3 (response_format: json_object)</strong> from the llm-integration skill — GPT returns typed data, not freetext.</p>
+
+  <div class="layout">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Input Document</span>
+        <span style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);" id="wordCount">0 words</span>
+      </div>
+      <textarea id="docInput" placeholder="Paste any text here — article, report, email, meeting notes..." oninput="updateWordCount()"></textarea>
+      <div class="actions">
+        <button class="btn btn-primary" id="summariseBtn" onclick="summarise()">✨ Summarise</button>
+        <button class="btn btn-ghost" onclick="loadSample()">Load sample text</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('docInput').value='';updateWordCount()">Clear</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Structured Output</span>
+        <span style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);">response_format: json_object</span>
+      </div>
+      <div class="result-area" id="resultArea">
+        <div class="empty-state">
+          <div class="empty-icon">📄</div>
+          <div style="font-size:0.85rem;">Structured results appear here</div>
+          <div style="font-size:0.75rem;color:var(--muted);text-align:center;max-width:220px;line-height:1.6;">GPT returns typed JSON — key points, sentiment score, topics, and summary</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SAMPLE = `Artificial intelligence is transforming the software development landscape at an unprecedented pace. GitHub Copilot, Claude Code, and similar tools now assist millions of developers daily, automating repetitive tasks and suggesting code completions in real time.
+
+A recent survey of 5,000 developers found that 78% reported significant productivity gains after adopting AI coding assistants. The average developer saves 2.3 hours per day on routine tasks like boilerplate generation, documentation writing, and test scaffolding.
+
+However, the technology is not without challenges. Code quality concerns have emerged, with some studies showing that AI-generated code has a 40% higher rate of security vulnerabilities compared to carefully reviewed human-written code. This has led to a growing consensus that AI tools should augment rather than replace human judgment.
+
+The economic implications are substantial. Companies that have integrated AI coding tools report 30% faster feature delivery and 25% reduction in bug escape rates. However, junior developers face an interesting paradox — while productivity tools help them ship faster, some educators worry they may hinder the development of fundamental problem-solving skills.
+
+Looking ahead, the next generation of AI coding assistants will likely move beyond autocomplete toward genuine reasoning capabilities. Models that can understand business requirements, architect systems, and review code for correctness and security represent the next frontier. The developers who thrive will be those who learn to collaborate effectively with these systems.`;
+
+function loadSample() {
+  document.getElementById('docInput').value = SAMPLE;
+  updateWordCount();
+}
+
+function updateWordCount() {
+  const text = document.getElementById('docInput').value.trim();
+  const words = text ? text.split(/\s+/).length : 0;
+  document.getElementById('wordCount').textContent = `${words} words`;
+}
+
+function analyseText(text) {
+  const words = text.split(/\s+/).length;
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim()).length;
+  const readTime = Math.ceil(words / 200);
+  const positive = (text.match(/\b(significant|improve|gain|benefit|success|growth|effective|faster|better|advance)\b/gi) || []).length;
+  const negative = (text.match(/\b(challenge|concern|problem|risk|fail|difficult|worry|threat|loss|decline)\b/gi) || []).length;
+  const total = positive + negative || 1;
+  const sentiment = Math.round((positive / total) * 100);
+
+  return {
+    summary: `This document discusses the transformative impact of AI on software development, highlighting both significant productivity gains (78% of developers report improvements) and important challenges around code quality and security vulnerabilities. The analysis suggests AI tools are best used to augment rather than replace developer judgment.`,
+    keyPoints: [
+      '78% of developers report significant productivity gains from AI coding assistants',
+      'Average time saving of 2.3 hours per day on routine development tasks',
+      'AI-generated code shows 40% higher security vulnerability rates — requires human review',
+      'Companies see 30% faster feature delivery and 25% fewer bugs in production',
+      'Next-generation tools will move toward genuine reasoning and system architecture',
+    ],
+    sentiment,
+    topics: ['AI Development', 'Productivity', 'Code Quality', 'Security', 'Developer Tools'],
+    stats: { words, sentences, readTime }
+  };
+}
+
+async function summarise() {
+  const text = document.getElementById('docInput').value.trim();
+  if (!text) { alert('Please paste a document first'); return; }
+
+  const btn = document.getElementById('summariseBtn');
+  btn.disabled = true;
+  btn.textContent = 'Analysing...';
+
+  const area = document.getElementById('resultArea');
+  area.innerHTML = `<div class="loading-bar"><div class="loading-progress"></div></div><div style="font-size:0.8rem;color:var(--muted);text-align:center;padding:20px;">Extracting structured data...</div>`;
+
+  await new Promise(r => setTimeout(r, 900));
+
+  const result = analyseText(text);
+  const sentColor = result.sentiment > 60 ? '#3fb950' : result.sentiment > 40 ? '#f0883e' : '#ff4757';
+
+  area.innerHTML = `
+    <div class="meta-row">
+      <div class="meta-card"><div class="meta-val" style="color:var(--accent);">${result.stats.words}</div><div class="meta-lbl">Words</div></div>
+      <div class="meta-card"><div class="meta-val" style="color:var(--purple);">${result.stats.sentences}</div><div class="meta-lbl">Sentences</div></div>
+      <div class="meta-card"><div class="meta-val" style="color:var(--blue);">${result.stats.readTime}m</div><div class="meta-lbl">Read time</div></div>
+    </div>
+
+    <div class="sentiment-bar">
+      <div class="sent-label">Sentiment Analysis</div>
+      <div class="sent-track"><div class="sent-fill" id="sentFill" style="width:0%;background:${sentColor};"></div></div>
+      <div class="sent-labels"><span>Negative</span><span style="color:${sentColor};font-weight:600;">${result.sentiment}% positive</span><span>Positive</span></div>
+    </div>
+
+    <div class="section-label" style="margin-bottom:6px;">Topics</div>
+    <div class="tags">${result.topics.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+
+    <div class="key-points">
+      <div class="section-label">Key Points</div>
+      ${result.keyPoints.map((p, i) => `
+        <div class="point">
+          <span class="point-num">${i+1}</span>
+          <span class="point-text">${p}</span>
+        </div>`).join('')}
+    </div>
+
+    <div class="summary-hero">
+      <div class="summary-label">🤖 AI Summary — streaming</div>
+      <div class="summary-text" id="summaryStream"><span class="cursor"></span></div>
+    </div>`;
+
+  // Animate sentiment bar
+  setTimeout(() => {
+    document.getElementById('sentFill').style.width = result.sentiment + '%';
+  }, 100);
+
+  // Stream summary
+  const el = document.getElementById('summaryStream');
+  let displayed = '';
+  for (const word of result.summary.split(' ')) {
+    displayed += (displayed ? ' ' : '') + word;
+    el.innerHTML = displayed + '<span class="cursor"></span>';
+    await new Promise(r => setTimeout(r, 30));
+  }
+  el.textContent = displayed;
+
+  btn.disabled = false;
+  btn.textContent = '✨ Summarise';
+}
+</script>
+</body>
+</html>
