@@ -20,7 +20,7 @@
     "setup": "node scripts/setup.js"
   },
   "dependencies": {
-    "skillforge-ai": "^1.1.0"
+    "skillforge-ai": "^1.2.0"
   },
   "devDependencies": {
     "serve": "^14.0.0"
