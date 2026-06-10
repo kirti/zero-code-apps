@@ -514,7 +514,12 @@ footer a{color:var(--accent);text-decoration:none;}
   </div><!-- /right -->
 </div>
 
-<script src="skills.js"></script>
+<script>
+// Fallback if skills.js hasn't been built yet
+window.SKILL_CONTENTS = window.SKILL_CONTENTS || {};
+window.SKILLFORGE_VERSION = window.SKILLFORGE_VERSION || 'not built';
+</script>
+<script src="skills.js" onerror="console.warn('skills.js not found — run npm run build:skills')"></script>
 <script>
 // ── State ─────────────────────────────────────────────────────────
 let provider = 'claude';

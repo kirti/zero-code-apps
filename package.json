@@ -1,8 +1,18 @@
 {
   "name": "zero-code-apps",
   "version": "1.0.0",
-  "description": "AI-powered demo platform — fintech app builder and cozy image generator. Built with zero human code using skillforge-ai.",
-  "keywords": ["ai", "skillforge-ai", "zero-code", "claude", "gpt", "demos", "no-code", "fintech", "image-generation"],
+  "description": "AI-powered demo platform \u2014 fintech app builder and cozy image generator. Built with zero human code using skillforge-ai.",
+  "keywords": [
+    "ai",
+    "skillforge-ai",
+    "zero-code",
+    "claude",
+    "gpt",
+    "demos",
+    "no-code",
+    "fintech",
+    "image-generation"
+  ],
   "author": "Kirti Kaushal <kirtikau@gmail.com>",
   "license": "MIT",
   "homepage": "https://kirti.github.io/zero-code-apps",
