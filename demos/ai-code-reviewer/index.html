@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Code Reviewer — skillforge-ai llm-integration</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#080c12;--bg2:#0d1420;--surface:#141e30;--surface2:#1a2640;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);--text:#e8edf5;--muted:#6b7a99;--accent:#00d4aa;--red:#ff4757;--amber:#f0883e;--green:#3fb950;--blue:#58a6ff;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    .mono{font-family:'DM Mono',monospace;}
+    nav{height:48px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;}
+    .nav-logo{font-weight:800;font-size:0.95rem;color:var(--accent);}
+    .nav-badge{font-family:'DM Mono',monospace;font-size:0.65rem;background:rgba(0,212,170,0.1);color:var(--accent);border:1px solid rgba(0,212,170,0.2);padding:2px 8px;border-radius:4px;}
+    .nav-patterns{display:flex;gap:6px;}
+    .pb{font-family:'DM Mono',monospace;font-size:0.62rem;padding:2px 8px;border-radius:4px;border:1px solid;}
+    .pb-green{background:rgba(0,212,170,0.08);color:var(--accent);border-color:rgba(0,212,170,0.2);}
+    .pb-blue{background:rgba(88,166,255,0.08);color:var(--blue);border-color:rgba(88,166,255,0.2);}
+    .container{max-width:1200px;margin:0 auto;padding:32px 24px;}
+    h1{font-size:1.8rem;font-weight:800;margin-bottom:6px;}
+    .subtitle{font-size:0.85rem;color:var(--muted);margin-bottom:28px;line-height:1.6;}
+    .layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+    .panel{background:var(--surface);border:1px solid var(--border2);border-radius:14px;overflow:hidden;}
+    .panel-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .panel-title{font-size:0.78rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);}
+    .lang-select{font-family:'DM Mono',monospace;font-size:0.7rem;background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:4px 8px;border-radius:6px;}
+    textarea{width:100%;min-height:360px;background:var(--bg);border:none;color:#e8c99a;font-family:'DM Mono',monospace;font-size:0.8rem;line-height:1.7;padding:16px;outline:none;resize:vertical;}
+    .actions{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;}
+    .btn{padding:8px 18px;border-radius:8px;font-family:'Syne',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
+    .btn-primary{background:var(--accent);color:#080c12;}
+    .btn-primary:hover{background:#00bfa0;}
+    .btn-primary:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed;}
+    .btn-ghost{background:var(--surface2);color:var(--muted);border:1px solid var(--border2);}
+    .btn-ghost:hover{color:var(--text);}
+    .review-area{padding:16px;min-height:360px;}
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:320px;color:var(--muted);gap:8px;}
+    .empty-icon{font-size:2.5rem;}
+    .empty-text{font-size:0.85rem;}
+
+    /* Score cards */
+    .scores{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
+    .score-card{background:var(--surface2);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border);}
+    .score-val{font-family:'DM Mono',monospace;font-size:1.4rem;font-weight:600;margin-bottom:2px;}
+    .score-label{font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;}
+    .score-a{color:var(--green);}
+    .score-b{color:var(--accent);}
+    .score-c{color:var(--amber);}
+    .score-d{color:var(--red);}
+
+    /* Issues */
+    .issue{background:var(--bg);border-radius:8px;padding:12px 14px;margin-bottom:8px;border-left:3px solid;}
+    .issue.critical{border-color:var(--red);}
+    .issue.warning{border-color:var(--amber);}
+    .issue.suggestion{border-color:var(--accent);}
+    .issue-header{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+    .issue-badge{font-family:'DM Mono',monospace;font-size:0.6rem;padding:1px 6px;border-radius:3px;text-transform:uppercase;font-weight:600;}
+    .badge-critical{background:rgba(255,71,87,0.15);color:var(--red);}
+    .badge-warning{background:rgba(240,136,62,0.15);color:var(--amber);}
+    .badge-suggestion{background:rgba(0,212,170,0.1);color:var(--accent);}
+    .issue-line{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);}
+    .issue-text{font-size:0.8rem;color:var(--text);line-height:1.6;}
+    .issue-fix{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted);margin-top:4px;padding:6px 8px;background:var(--surface);border-radius:4px;}
+
+    /* Streaming summary */
+    .summary-box{background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:14px;margin-top:12px;}
+    .summary-title{font-size:0.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;}
+    .summary-text{font-size:0.83rem;color:var(--text);line-height:1.7;}
+    .cursor{display:inline-block;width:2px;height:13px;background:var(--accent);margin-left:1px;vertical-align:middle;animation:blink 1s infinite;}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+    /* Loading */
+    .loading-bar{height:2px;background:var(--surface2);border-radius:1px;overflow:hidden;margin-bottom:12px;}
+    .loading-progress{height:100%;background:linear-gradient(90deg,var(--accent),var(--blue));border-radius:1px;animation:progress 2s ease-in-out infinite;}
+    @keyframes progress{0%{width:0%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}
+
+    .sample-btns{display:flex;gap:6px;flex-wrap:wrap;}
+    .sample-btn{font-size:0.7rem;padding:4px 10px;background:var(--surface2);border:1px solid var(--border2);color:var(--muted);border-radius:6px;cursor:pointer;transition:all .2s;}
+    .sample-btn:hover{color:var(--text);border-color:var(--accent);}
+    @media(max-width:800px){.layout{grid-template-columns:1fr;}.scores{grid-template-columns:1fr 1fr;}}
+  </style>
+</head>
+<body>
+
+<nav>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="nav-logo">AI Code Reviewer</span>
+    <span class="nav-badge">llm-integration · structured output + streaming</span>
+  </div>
+  <div class="nav-patterns">
+    <span class="pb pb-green">⚡ SSE Streaming</span>
+    <span class="pb pb-blue">📋 Structured JSON</span>
+  </div>
+</nav>
+
+<div class="container">
+  <h1>AI Code Reviewer</h1>
+  <p class="subtitle">Paste any code → get a structured review with scores, issues, and a streaming summary.<br>Demonstrates <strong>Pattern 3 (structured JSON output)</strong> + <strong>Pattern 1 (SSE streaming)</strong> from the llm-integration skill.</p>
+
+  <div class="layout">
+    <!-- LEFT: Code Input -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Your Code</span>
+        <select class="lang-select" id="langSelect">
+          <option>JavaScript</option>
+          <option>TypeScript</option>
+          <option>Python</option>
+          <option>React JSX</option>
+          <option>Node.js</option>
+        </select>
+      </div>
+      <textarea id="codeInput" placeholder="Paste your code here..."></textarea>
+      <div class="actions">
+        <button class="btn btn-primary" id="reviewBtn" onclick="reviewCode()">🔍 Review Code</button>
+        <div class="sample-btns">
+          <button class="sample-btn" onclick="loadSample('bad')">Load bad example</button>
+          <button class="sample-btn" onclick="loadSample('good')">Load good example</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Review Output -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Review Results</span>
+        <span class="mono" id="reviewMeta" style="font-size:0.65rem;color:var(--muted);"></span>
+      </div>
+      <div class="review-area" id="reviewArea">
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <div class="empty-text">Review results appear here</div>
+          <div style="font-size:0.75rem;color:var(--muted);text-align:center;max-width:220px;line-height:1.6;">Load a sample or paste your own code and click Review</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SAMPLES = {
+  bad: `// Fetch user data and display
+async function getUser(id) {
+  var data = await fetch('https://api.example.com/users/' + id);
+  var user = await data.json();
+  document.getElementById('name').innerHTML = user.name;
+  document.getElementById('email').innerHTML = user.email;
+  passwords[id] = user.password;
+  return user;
+}
+
+function processUsers(users) {
+  var result = [];
+  for (var i = 0; i < users.length; i++) {
+    for (var j = 0; j < users.length; j++) {
+      if (users[i].id != users[j].id) {
+        result.push(users[i]);
+      }
+    }
+  }
+  return result;
+}`,
+  good: `// Fetch user data with proper error handling
+async function getUser(id) {
+  try {
+    const response = await fetch(\`/api/users/\${id}\`);
+    if (!response.ok) throw new Error(\`HTTP \${response.status}\`);
+    const user = await response.json();
+    
+    // Use textContent to prevent XSS
+    document.getElementById('name').textContent = user.name;
+    document.getElementById('email').textContent = user.email;
+    
+    return user;
+  } catch (error) {
+    console.error('Failed to fetch user:', error);
+    throw error;
+  }
+}
+
+// O(n) deduplication using Set
+function processUsers(users) {
+  const seen = new Set();
+  return users.filter(user => {
+    if (seen.has(user.id)) return false;
+    seen.add(user.id);
+    return true;
+  });
+}`
+};
+
+function loadSample(type) {
+  document.getElementById('codeInput').value = SAMPLES[type];
+}
+
+// Simulated review results — in production this would be structured JSON from GPT
+function generateReview(code) {
+  const isBad = code.includes('innerHTML') || code.includes('var ') || code.includes('passwords[');
+  
+  if (isBad) return {
+    scores: { quality: 'D', security: 'F', performance: 'C', readability: 'C' },
+    issues: [
+      { severity: 'critical', line: 5, text: 'XSS vulnerability — using innerHTML with user data allows script injection', fix: 'document.getElementById("name").textContent = user.name;' },
+      { severity: 'critical', line: 7, text: 'Storing password in global variable — severe security risk', fix: 'Never store credentials in memory. Use secure session management.' },
+      { severity: 'warning', line: 1, text: 'No error handling on fetch — network failures will throw unhandled exceptions', fix: 'Wrap in try/catch and check response.ok before calling .json()' },
+      { severity: 'warning', line: 12, text: 'O(n²) nested loop — will be extremely slow on large arrays', fix: 'Use Set for O(n) deduplication instead' },
+      { severity: 'suggestion', line: 1, text: 'Using var instead of const/let — var has function scope which causes bugs', fix: 'Replace all var with const or let' },
+    ],
+    summary: ''
+  };
+
+  return {
+    scores: { quality: 'A', security: 'A', performance: 'A', readability: 'A' },
+    issues: [
+      { severity: 'suggestion', line: 3, text: 'Consider adding JSDoc comment for better IDE support', fix: '/** @param {string} id - User ID to fetch */' },
+    ],
+    summary: ''
+  };
+}
+
+async function reviewCode() {
+  const code = document.getElementById('codeInput').value.trim();
+  if (!code) { alert('Please paste some code first'); return; }
+
+  const btn = document.getElementById('reviewBtn');
+  btn.disabled = true;
+  btn.textContent = 'Reviewing...';
+
+  const area = document.getElementById('reviewArea');
+  area.innerHTML = `<div class="loading-bar"><div class="loading-progress"></div></div><div style="font-size:0.8rem;color:var(--muted);text-align:center;padding:20px;">Analysing code structure...</div>`;
+
+  await new Promise(r => setTimeout(r, 800));
+
+  // Pattern 3: Structured JSON output
+  const review = generateReview(code);
+  const scoreColors = { A: 'score-a', B: 'score-b', C: 'score-c', D: 'score-d', F: 'score-d' };
+  const issueCount = review.issues.length;
+  const critical = review.issues.filter(i => i.severity === 'critical').length;
+
+  area.innerHTML = `
+    <div class="scores">
+      ${Object.entries(review.scores).map(([k,v]) => `
+        <div class="score-card">
+          <div class="score-val ${scoreColors[v]}">${v}</div>
+          <div class="score-label">${k}</div>
+        </div>`).join('')}
+    </div>
+    <div style="font-size:0.72rem;color:var(--muted);margin-bottom:10px;font-family:'DM Mono',monospace;">
+      ${issueCount} issues found · ${critical} critical
+    </div>
+    ${review.issues.map(issue => `
+      <div class="issue ${issue.severity}">
+        <div class="issue-header">
+          <span class="issue-badge badge-${issue.severity}">${issue.severity}</span>
+          <span class="issue-line">Line ${issue.line}</span>
+        </div>
+        <div class="issue-text">${issue.text}</div>
+        <div class="issue-fix">Fix: ${issue.fix}</div>
+      </div>`).join('')}
+    <div class="summary-box">
+      <div class="summary-title">🤖 AI Summary — streaming</div>
+      <div class="summary-text" id="summaryText"><span class="cursor"></span></div>
+    </div>`;
+
+  // Pattern 1: Simulate streaming summary
+  const isBad = code.includes('innerHTML') || code.includes('passwords[');
+  const summaryText = isBad
+    ? 'This code has critical security vulnerabilities that must be fixed before shipping. The XSS vulnerability via innerHTML and password storage in a global variable are especially dangerous. The O(n²) loop will also cause performance issues at scale. Refactor using textContent for DOM manipulation, implement proper session management, and replace the nested loop with a Set-based approach.'
+    : 'This is well-written code that follows security best practices. Error handling is thorough, XSS is properly prevented with textContent, and the O(n) Set-based deduplication shows good algorithmic thinking. The minor suggestion is to add JSDoc comments for better IDE support and team documentation.';
+
+  const summaryEl = document.getElementById('summaryText');
+  let displayed = '';
+  for (const word of summaryText.split(' ')) {
+    displayed += (displayed ? ' ' : '') + word;
+    summaryEl.innerHTML = displayed + '<span class="cursor"></span>';
+    await new Promise(r => setTimeout(r, 35));
+  }
+  summaryEl.textContent = displayed;
+
+  document.getElementById('reviewMeta').textContent = `${code.split('\n').length} lines · ${code.length} chars`;
+  btn.disabled = false;
+  btn.textContent = '🔍 Review Code';
+}
+</script>
+</body>
+</html>

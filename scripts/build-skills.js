@@ -23,7 +23,7 @@ function loadSkill(name) {
   return null;
 }
 
-const SKILLS = ['frontend-design', 'chart-js', 'fintech-ui', 'api-integration', 'zca-schema'];
+const SKILLS = ['frontend-design', 'chart-js', 'fintech-ui', 'api-integration', 'zca-schema', 'llm-integration'];
 
 console.log('🔧 Building skills from skillforge-ai...\n');
 

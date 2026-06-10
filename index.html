@@ -3,62 +3,1087 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>zero-code-apps — AI demo platform</title>
+<title>AI App Builder — skillforge-ai · zero-code-apps</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#070a0f;--surface:#0d1117;--surface2:#161b22;--border:#21262d;--accent:#00d4aa;--text:#e6edf3;--muted:#8b949e;}
+:root {
+  --bg:#070a0f;--surface:#0d1117;--surface2:#161b22;--surface3:#1c2333;
+  --border:#21262d;--border2:#30363d;
+  --accent:#00d4aa;--accent2:#7c3aed;--accent3:#f59e0b;
+  --text:#e6edf3;--muted:#8b949e;--muted2:#6e7681;
+  --green:#3fb950;--red:#f85149;--blue:#58a6ff;--orange:#f0883e;
+  --claude:#d4753a;--openai:#10a37f;--gemini:#4285f4;
+  --radius:8px;--radius-lg:12px;
+}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;}
-body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,170,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,170,0.025) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
-.wrap{text-align:center;padding:40px 24px;position:relative;z-index:1;max-width:700px;width:100%;}
-.eyebrow{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:20px;}
-h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;line-height:1.1;margin-bottom:14px;}
-h1 span{color:var(--accent);}
-.sub{font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);margin-bottom:48px;line-height:1.7;}
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:32px;}
-.demo-card{background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:28px 20px;text-decoration:none;transition:all .2s;display:block;}
-.demo-card:hover{border-color:var(--accent);transform:translateY(-3px);}
-.demo-card.cozy{border-color:rgba(193,127,74,0.3);}
-.demo-card.cozy:hover{border-color:#c17f4a;}
-.card-icon{font-size:32px;margin-bottom:12px;display:block;}
-.card-title{font-size:16px;font-weight:700;margin-bottom:6px;}
-.card-fintech .card-title{color:var(--accent);}
-.card-cozy .card-title{color:#c17f4a;}
-.card-desc{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.6;}
-.card-tag{display:inline-block;font-family:'DM Mono',monospace;font-size:10px;padding:3px 8px;border-radius:3px;margin-top:10px;}
-.tag-tech{background:rgba(0,212,170,0.1);color:var(--accent);border:0.5px solid rgba(0,212,170,0.3);}
-.tag-cozy{background:rgba(193,127,74,0.1);color:#c17f4a;border:0.5px solid rgba(193,127,74,0.3);}
-.links{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
-.links a{color:var(--muted);text-decoration:none;margin:0 8px;}
-.links a:hover{color:var(--accent);}
-@media(max-width:480px){.cards{grid-template-columns:1fr;}}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,170,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,170,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0;}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(7,10,15,0.95);backdrop-filter:blur(12px);border-bottom:0.5px solid var(--border);padding:0 20px;height:50px;display:flex;align-items:center;justify-content:space-between;}
+.nav-logo{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:6px;}
+.nav-logo span{color:var(--muted);}
+.nav-right{display:flex;align-items:center;gap:12px;}
+.nav-right a{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-decoration:none;transition:color .2s;}
+.nav-right a:hover{color:var(--text);}
+.nav-badge{font-family:'DM Mono',monospace;font-size:10px;background:rgba(0,212,170,0.1);color:var(--accent);border:0.5px solid rgba(0,212,170,0.25);border-radius:4px;padding:2px 8px;}
+
+/* LAYOUT */
+.app{display:grid;grid-template-columns:320px 1fr;height:calc(100vh - 50px);position:relative;z-index:1;}
+
+/* LEFT PANEL */
+.left{display:flex;flex-direction:column;gap:0;overflow-y:auto;border-right:0.5px solid var(--border);background:var(--surface);}
+.left::-webkit-scrollbar{width:4px;}
+.left::-webkit-scrollbar-track{background:transparent;}
+.left::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+.panel-section{border-bottom:0.5px solid var(--border);padding:14px;}
+.panel-section:last-child{border-bottom:none;}
+.panel-title{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.panel-title span{font-size:10px;color:var(--muted2);}
+
+/* PROVIDER */
+.provider-row{display:flex;gap:6px;flex-wrap:wrap;}
+.prov-btn{font-family:'DM Mono',monospace;font-size:11px;padding:6px 12px;border-radius:6px;border:0.5px solid var(--border2);background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px;flex:1;justify-content:center;}
+.prov-btn:hover{color:var(--text);border-color:var(--border2);}
+.prov-btn.ac{border-width:1.5px;}
+.prov-btn.ac-claude{border-color:var(--claude);background:rgba(212,117,58,0.1);color:var(--claude);}
+.prov-btn.ac-openai{border-color:var(--openai);background:rgba(16,163,127,0.1);color:var(--openai);}
+.prov-btn.ac-gemini{border-color:var(--gemini);background:rgba(66,133,244,0.1);color:var(--gemini);}
+.prov-btn.ac-compare{border-color:var(--accent2);background:rgba(124,58,237,0.1);color:#a78bfa;}
+.pdot{width:6px;height:6px;border-radius:50%;}
+
+/* PROMPT */
+textarea#prompt{width:100%;background:var(--surface2);border:0.5px solid var(--border);border-radius:6px;padding:10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text);resize:vertical;min-height:80px;line-height:1.6;transition:border-color .2s;}
+textarea#prompt:focus{outline:none;border-color:var(--accent);}
+textarea#prompt::placeholder{color:var(--muted2);}
+
+/* AUTO BUILD TOGGLE */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
+.toggle-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+.toggle{position:relative;width:36px;height:20px;cursor:pointer;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-track{position:absolute;inset:0;background:var(--border2);border-radius:10px;transition:.2s;}
+.toggle input:checked + .toggle-track{background:var(--accent);}
+.toggle-thumb{position:absolute;left:3px;top:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:.2s;}
+.toggle input:checked ~ .toggle-thumb{transform:translateX(16px);}
+
+/* THEMING */
+.theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.theme-opt{background:var(--surface2);border:0.5px solid var(--border);border-radius:6px;padding:7px 9px;cursor:pointer;transition:all .2s;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);display:flex;align-items:center;gap:5px;}
+.theme-opt:hover{border-color:var(--border2);color:var(--text);}
+.theme-opt.selected{border-color:var(--accent);background:rgba(0,212,170,0.08);color:var(--accent);}
+.theme-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.select-row{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+select.theme-select{background:var(--surface2);border:0.5px solid var(--border);border-radius:6px;padding:7px 10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text);width:100%;cursor:pointer;transition:border-color .2s;}
+select.theme-select:focus{outline:none;border-color:var(--accent);}
+select.theme-select option{background:var(--surface2);}
+
+/* SKILLS */
+.skills-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.skill-wrap{position:relative;}
+.skill-chip{font-family:'DM Mono',monospace;font-size:10px;padding:6px 8px;border-radius:5px;border:0.5px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .2s;width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:4px;}
+.skill-chip.on{border-color:var(--accent);background:rgba(0,212,170,0.08);color:var(--accent);}
+.skill-chip-icon{font-size:12px;}
+.skill-expand{width:14px;height:14px;display:flex;align-items:center;justify-content:center;font-size:8px;color:inherit;opacity:0.6;border-radius:2px;border:0.5px solid currentColor;}
+.skill-drawer{display:none;background:var(--bg);border:0.5px solid var(--border);border-radius:5px;padding:8px;margin-top:3px;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.7;max-height:160px;overflow-y:auto;}
+.skill-drawer.open{display:block;}
+.skill-drawer .skill-stat{color:var(--accent);font-size:9px;margin-bottom:6px;}
+.skill-drawer .rule{padding:2px 0;border-bottom:0.5px solid var(--border);display:flex;gap:5px;}
+.skill-drawer .rule:last-child{border-bottom:none;}
+.skill-drawer .rule::before{content:'+';color:var(--green);flex-shrink:0;}
+
+/* API KEY */
+.key-wrap{position:relative;}
+.key-wrap input{width:100%;background:var(--surface2);border:0.5px solid var(--border);border-radius:6px;padding:8px 30px 8px 10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text);transition:border-color .2s;}
+.key-wrap input:focus{outline:none;border-color:var(--accent);}
+.key-wrap input::placeholder{color:var(--muted2);}
+.key-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px;}
+.key-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);margin-top:5px;line-height:1.5;}
+
+/* BUILD BTN */
+.build-btn{width:100%;padding:11px;background:var(--accent);color:#000;border:none;border-radius:6px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px;margin-top:2px;}
+.build-btn:hover{background:#00bfa0;transform:translateY(-1px);}
+.build-btn:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed;transform:none;}
+.build-btn .spin{width:14px;height:14px;border:2px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite;display:none;}
+.build-btn.loading .spin{display:block;}
+.build-btn.loading .btxt{display:none;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* STATUS */
+.status-bar{display:flex;align-items:center;gap:7px;padding:8px 14px;border-top:0.5px solid var(--border);background:var(--bg);font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--border2);flex-shrink:0;}
+.sdot.active{background:var(--accent);animation:pulse 1.2s infinite;}
+.sdot.done{background:var(--green);}
+.sdot.err{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* RIGHT PANEL */
+.right{display:flex;flex-direction:column;overflow:hidden;background:var(--bg);height:100%;}
+
+/* TEMPLATE GALLERY */
+.gallery{flex:1;overflow-y:auto;padding:20px;}
+.gallery::-webkit-scrollbar{width:4px;}
+.gallery::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.gallery-header{margin-bottom:16px;}
+.gallery-title{font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.gallery-sub{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);line-height:1.6;}
+.template-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:24px;}
+.cat-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;margin-top:16px;}
+.tmpl-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;cursor:default;transition:all .2s;position:relative;overflow:hidden;}
+.tmpl-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,212,170,0.03),transparent);opacity:0;transition:opacity .2s;pointer-events:none;}
+.tmpl-actions{display:flex;gap:5px;position:relative;z-index:10;}
+.tmpl-btn{position:relative;z-index:11;pointer-events:auto;}
+.tmpl-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+.tmpl-card:hover::before{opacity:1;}
+.tmpl-icon{font-size:24px;margin-bottom:8px;display:block;}
+.tmpl-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.tmpl-desc{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.6;margin-bottom:10px;}
+.tmpl-actions{display:flex;gap=5px;gap:5px;}
+.tmpl-btn{font-family:'DM Mono',monospace;font-size:10px;padding:4px 10px;border-radius:4px;border:0.5px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;flex:1;text-align:center;}
+.tmpl-btn:hover{border-color:var(--accent);color:var(--accent);}
+.tmpl-btn.preview{border-color:var(--green);color:var(--green);}
+.tmpl-btn.preview:hover{background:rgba(63,185,80,0.1);}
+
+/* PREVIEW AREA */
+.preview-area{display:none;flex-direction:column;height:100%;min-height:0;flex:1;}
+.preview-area.show{display:flex;}
+.preview-topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:0.5px solid var(--border);background:var(--surface);flex-shrink:0;}
+.preview-tabs{display:flex;gap:3px;}
+.ptab{font-family:'DM Mono',monospace;font-size:11px;padding:5px 12px;border-radius:4px;border:0.5px solid transparent;color:var(--muted);cursor:pointer;transition:all .2s;}
+.ptab.active{background:var(--surface2);border-color:var(--border);color:var(--text);}
+.preview-actions{display:flex;gap:6px;}
+.pact{font-family:'DM Mono',monospace;font-size:11px;padding:5px 11px;border-radius:4px;border:0.5px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:4px;}
+.pact:hover{border-color:var(--accent);color:var(--accent);}
+.pact:disabled{opacity:0.4;cursor:not-allowed;}
+.pact.primary{background:var(--accent);color:#000;border-color:var(--accent);}
+.pact.primary:hover{background:#00bfa0;}
+
+/* PREVIEW PANELS */
+.preview-wrap{flex:1;overflow:hidden;position:relative;min-height:400px;}
+iframe#preview{width:100%;height:100%;border:none;background:#fff;}
+.stream-view{position:absolute;inset:0;display:none;flex-direction:column;background:var(--surface);}
+.stream-view.show{display:flex;}
+.stream-header{padding:10px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.stream-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);}
+.stream-stats{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-left:auto;}
+.stream-pre{flex:1;overflow:auto;padding:14px;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.65;white-space:pre-wrap;word-break:break-all;}
+.code-view{display:none;flex:1;overflow:auto;background:var(--surface);}
+.code-view pre{padding:16px;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;white-space:pre-wrap;word-break:break-all;}
+
+/* TRANSPARENCY PANEL */
+.transparency{border-top:0.5px solid var(--border);background:var(--surface);flex-shrink:0;}
+.trans-tabs{display:flex;border-bottom:0.5px solid var(--border);}
+.ttab{font-family:'DM Mono',monospace;font-size:10px;padding:8px 14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;display:flex;align-items:center;gap:5px;}
+.ttab:hover{color:var(--text);}
+.ttab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.ttab .tbadge{font-size:9px;background:var(--surface2);border:0.5px solid var(--border);border-radius:3px;padding:1px 5px;color:var(--muted);}
+.trans-body{padding:12px 14px;max-height:180px;overflow-y:auto;}
+.trans-body::-webkit-scrollbar{width:3px;}
+.trans-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* SYSTEM PROMPT VIEW */
+.sysprompt{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.7;white-space:pre-wrap;}
+.sysprompt .skill-section{color:var(--accent);font-weight:500;}
+.sysprompt .skill-content{color:var(--muted);}
+.copy-btn{font-family:'DM Mono',monospace;font-size:10px;padding:3px 8px;border:0.5px solid var(--border);border-radius:3px;background:transparent;color:var(--muted);cursor:pointer;float:right;transition:all .2s;}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* COST VIEW */
+.cost-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.cost-card{background:var(--surface2);border-radius:6px;padding:10px;}
+.cost-provider{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:4px;display:flex;align-items:center;gap:4px;}
+.cost-amount{font-size:16px;font-weight:700;color:var(--text);}
+.cost-tokens{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);margin-top:2px;}
+.cost-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);margin-top:8px;line-height:1.6;}
+
+/* DIFF VIEW */
+.diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.diff-col{background:var(--surface2);border-radius:6px;padding:10px;}
+.diff-col-title{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.diff-content{font-family:'DM Mono',monospace;font-size:9px;line-height:1.7;color:var(--muted);max-height:120px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;}
+.diff-content .added{color:var(--green);}
+.diff-token-count{font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:3px;background:var(--surface);border:0.5px solid var(--border);}
+
+/* COMPARE VIEW */
+.compare-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px;height:100%;overflow:hidden;}
+.cmp-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;}
+.cmp-header{padding:8px 12px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:11px;flex-shrink:0;}
+.cmp-iframe{flex:1;border:none;background:#fff;}
+.cmp-empty{flex:1;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+
+/* EMPTY STATE */
+.empty-state{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
+.empty-icon{width:56px;height:56px;border-radius:12px;background:var(--surface2);border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;}
+.empty-title{font-size:15px;font-weight:600;color:var(--text);}
+.empty-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:center;line-height:1.7;max-width:280px;}
+
+/* WITHOUT/WITH */
+.ww-btn{font-family:'DM Mono',monospace;font-size:10px;padding:4px 10px;border:0.5px solid var(--accent2);border-radius:4px;background:rgba(124,58,237,0.1);color:#a78bfa;cursor:pointer;transition:all .2s;}
+.ww-btn:hover{background:rgba(124,58,237,0.2);}
+
+/* BUSINESS CTA */
+.biz-note{background:rgba(0,212,170,0.05);border:0.5px solid rgba(0,212,170,0.2);border-radius:6px;padding:10px 12px;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.7;margin-top:8px;}
+.biz-note strong{color:var(--accent);font-weight:500;}
+.biz-note a{color:var(--accent);text-decoration:none;}
+
+footer{text-align:center;padding:20px;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);border-top:0.5px solid var(--border);}
+footer a{color:var(--accent);text-decoration:none;}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="eyebrow">zero-code-apps · AI demo platform</div>
-  <h1>Build anything<br/>with <span>AI</span></h1>
-  <p class="sub">Two demos. One for developers. One for everyone.<br/>Both powered by skillforge-ai.</p>
-  <div class="cards">
-    <a href="builder/" class="demo-card card-fintech">
-      <span class="card-icon">💹</span>
-      <div class="card-title">AI App Builder</div>
-      <div class="card-desc">Describe a fintech app. Watch Claude, GPT-4o, or Gemini stream it into a live, downloadable web app.</div>
-      <span class="card-tag tag-tech">for developers</span>
-    </a>
-    <a href="cozy/" class="demo-card card-cozy cozy">
-      <span class="card-icon">✦</span>
-      <div class="card-title">Cozy Generator</div>
-      <div class="card-desc">Describe your vibe. Get a beautiful AI image in seconds. Warm, dreamy, instantly downloadable.</div>
-      <span class="card-tag tag-cozy">for everyone</span>
-    </a>
-  </div>
-  <div class="links">
+
+<nav>
+  <a href="../" class="nav-logo">zero-code-apps <span>/ builder</span></a>
+  <div class="nav-right">
+    <a href="../cozy/">✦ cozy</a>
+    <a href="../skillforge/">npm</a>
     <a href="https://github.com/kirti/zero-code-apps" target="_blank">github</a>
-    <a href="https://www.npmjs.com/package/skillforge-ai" target="_blank">npm</a>
-    <a href="https://www.linkedin.com/in/kirti3/" target="_blank">linkedin</a>
-    <a href="https://kirtikau.medium.com" target="_blank">medium</a>
+    <span class="nav-badge">powered by skillforge-ai</span>
   </div>
+</nav>
+
+<div class="app">
+
+  <!-- LEFT PANEL -->
+  <div class="left">
+
+    <!-- Provider -->
+    <div class="panel-section">
+      <div class="panel-title">AI Provider</div>
+      <div class="provider-row">
+        <button class="prov-btn ac ac-claude" onclick="setProvider('claude')" id="pb-claude">
+          <span class="pdot" style="background:var(--claude)"></span>Claude
+        </button>
+        <button class="prov-btn" onclick="setProvider('openai')" id="pb-openai">
+          <span class="pdot" style="background:var(--openai)"></span>GPT-4o
+        </button>
+        <button class="prov-btn" onclick="setProvider('gemini')" id="pb-gemini">
+          <span class="pdot" style="background:var(--gemini)"></span>Gemini
+        </button>
+      </div>
+      <div style="display:flex;gap:5px;margin-top:5px;">
+        <button class="prov-btn" onclick="setProvider('compare')" id="pb-compare" style="border-color:var(--accent2);color:#a78bfa;flex:1;">
+          ⚡ Compare all 3
+        </button>
+        <button class="ww-btn" onclick="runWithoutWith()" title="Run same prompt with and without skills side by side">
+          ± Skills diff
+        </button>
+      </div>
+    </div>
+
+    <!-- Prompt -->
+    <div class="panel-section">
+      <div class="panel-title">Describe your app <span id="char-count">0 chars</span></div>
+      <textarea id="prompt" placeholder="Build a dark crypto trading dashboard with BTC ETH SOL prices, candlestick chart, portfolio tracker..." oninput="updateCharCount()"></textarea>
+      <div class="toggle-row">
+        <span class="toggle-label">Auto-build on template select</span>
+        <label class="toggle">
+          <input type="checkbox" id="auto-build">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Theming -->
+    <div class="panel-section">
+      <div class="panel-title">Theme <span>injected into prompt</span></div>
+      <div class="theme-grid">
+        <div class="theme-opt selected" onclick="setTheme(this,'dark')" data-theme="dark">
+          <span class="theme-dot" style="background:#080c12;border:1px solid #333;"></span>Dark premium
+        </div>
+        <div class="theme-opt" onclick="setTheme(this,'light')" data-theme="light">
+          <span class="theme-dot" style="background:#f8fafc;border:1px solid #ddd;"></span>Light clean
+        </div>
+        <div class="theme-opt" onclick="setTheme(this,'ocean')" data-theme="ocean">
+          <span class="theme-dot" style="background:#0a192f;border:1px solid #1e3a5f;"></span>Ocean dark
+        </div>
+        <div class="theme-opt" onclick="setTheme(this,'warm')" data-theme="warm">
+          <span class="theme-dot" style="background:#1a1209;border:1px solid #3d2b0d;"></span>Warm dark
+        </div>
+      </div>
+      <div class="select-row">
+        <select class="theme-select" id="layout-select">
+          <option value="sidebar">Sidebar navigation</option>
+          <option value="topnav">Top navigation</option>
+          <option value="fullwidth">Full width</option>
+          <option value="cards">Card grid</option>
+        </select>
+        <select class="theme-select" id="font-select">
+          <option value="syne-mono">Syne + DM Mono (default)</option>
+          <option value="playfair">Playfair Display + Serif</option>
+          <option value="jakarta">Plus Jakarta + Fira Code</option>
+          <option value="system">System default</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Skills -->
+    <div class="panel-section">
+      <div class="panel-title">skillforge-ai Skills <span id="total-skill-chars">loading...</span></div>
+      <div class="skills-grid" id="skills-grid">
+        <div class="skill-wrap">
+          <button class="skill-chip on" id="sc-frontend" onclick="toggleSkill('frontend-design',this)">
+            <span>✦ frontend-design</span>
+            <span class="skill-expand" onclick="expandSkill(event,'frontend-design')">▼</span>
+          </button>
+          <div class="skill-drawer" id="sd-frontend-design"></div>
+        </div>
+        <div class="skill-wrap">
+          <button class="skill-chip on" id="sc-chart" onclick="toggleSkill('chart-js',this)">
+            <span>📊 chart-js</span>
+            <span class="skill-expand" onclick="expandSkill(event,'chart-js')">▼</span>
+          </button>
+          <div class="skill-drawer" id="sd-chart-js"></div>
+        </div>
+        <div class="skill-wrap">
+          <button class="skill-chip on" id="sc-fintech" onclick="toggleSkill('fintech-ui',this)">
+            <span>💹 fintech-ui</span>
+            <span class="skill-expand" onclick="expandSkill(event,'fintech-ui')">▼</span>
+          </button>
+          <div class="skill-drawer" id="sd-fintech-ui"></div>
+          <div class="skill-chip" id="sc-llm" onclick="toggleSkill('llm-integration',this)">
+            <span>🤖 llm-integration</span>
+            <span class="skill-expand" onclick="expandSkill(event,'llm-integration')">▼</span>
+          </div>
+          <div class="skill-drawer" id="sd-llm-integration"></div>
+        </div>
+        <div class="skill-wrap">
+          <button class="skill-chip on" id="sc-api" onclick="toggleSkill('api-integration',this)">
+            <span>🔌 api-integration</span>
+            <span class="skill-expand" onclick="expandSkill(event,'api-integration')">▼</span>
+          </button>
+          <div class="skill-drawer" id="sd-api-integration"></div>
+        </div>
+        <div class="skill-wrap">
+          <button class="skill-chip" id="sc-zca" onclick="toggleSkill('zca-schema',this)">
+            <span>⚙️ zca-schema</span>
+            <span class="skill-expand" onclick="expandSkill(event,'zca-schema')">▼</span>
+          </button>
+          <div class="skill-drawer" id="sd-zca-schema"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- API Keys -->
+    <div class="panel-section" id="key-section">
+      <div class="panel-title">API Key <span>stays in browser</span></div>
+      <div id="key-claude">
+        <div class="key-wrap">
+          <input type="password" id="k-claude" placeholder="sk-ant-..." autocomplete="off">
+          <button class="key-eye" onclick="toggleKey('k-claude')">👁</button>
+        </div>
+      </div>
+      <div id="key-openai" style="display:none;margin-top:6px;">
+        <div class="key-wrap">
+          <input type="password" id="k-openai" placeholder="sk-..." autocomplete="off">
+          <button class="key-eye" onclick="toggleKey('k-openai')">👁</button>
+        </div>
+      </div>
+      <div id="key-gemini" style="display:none;margin-top:6px;">
+        <div class="key-wrap">
+          <input type="password" id="k-gemini" placeholder="AIza..." autocomplete="off">
+          <button class="key-eye" onclick="toggleKey('k-gemini')">👁</button>
+        </div>
+      </div>
+      <div class="key-note">Your key never leaves your browser. All calls go direct from your device to the AI provider.</div>
+    </div>
+
+    <!-- Build -->
+    <div class="panel-section">
+      <button class="build-btn" id="build-btn" onclick="buildApp()">
+        <div class="spin"></div>
+        <span class="btxt">⚡ Build App</span>
+      </button>
+    </div>
+
+    <!-- Status -->
+    <div class="status-bar">
+      <div class="sdot" id="sdot"></div>
+      <span id="stext">Choose a template or describe your app</span>
+    </div>
+
+  </div><!-- /left -->
+
+  <!-- RIGHT PANEL -->
+  <div class="right">
+
+    <!-- TEMPLATE GALLERY (shown by default) -->
+    <div class="gallery" id="gallery">
+      <div class="gallery-header">
+        <div class="gallery-title">Choose a template</div>
+        <div class="gallery-sub">Preview pre-built apps instantly or generate a custom version with your AI provider.</div>
+      </div>
+
+      <div class="cat-label">Fintech & Trading</div>
+      <div class="template-grid" id="tgrid-fintech"></div>
+
+      <div class="cat-label">Analytics & Business</div>
+      <div class="template-grid" id="tgrid-business"></div>
+
+      <div class="gallery-sub" style="font-size:0.68rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin:16px 0 8px;padding:0 4px;">🤖 LLM Examples — skillforge-ai llm-integration skill</div>
+      <div class="template-grid" id="tgrid-llm"></div>
+
+      <div class="biz-note">
+        <strong>These are UI prototypes.</strong> skillforge-ai can help extend them with real integrations —
+        <a href="mailto:kirtikau@gmail.com">payment APIs (Stripe)</a>,
+        <a href="mailto:kirtikau@gmail.com">live trading data (Alpaca, Coinbase)</a>,
+        authentication, and full production deployment.
+        <a href="mailto:kirtikau@gmail.com">Get in touch →</a>
+      </div>
+    </div>
+
+    <!-- PREVIEW AREA (shown after generation) -->
+    <div class="preview-area" id="preview-area">
+
+      <div class="preview-topbar">
+        <div class="preview-tabs">
+          <button class="ptab active" onclick="switchTab('preview')" id="ptab-preview">Preview</button>
+          <button class="ptab" onclick="switchTab('code')" id="ptab-code">Code</button>
+          <button class="ptab" onclick="switchTab('stream')" id="ptab-stream">Stream</button>
+          <button class="ptab" onclick="switchTab('compare')" id="ptab-compare" style="display:none;">Compare</button>
+        </div>
+        <div class="preview-actions">
+          <button class="pact" onclick="showGallery()" title="Back to templates">← Templates</button>
+          <button class="pact" id="share-btn" onclick="shareApp()" disabled>🔗 Share</button>
+          <button class="pact" id="dl-btn" onclick="downloadApp()" disabled>↓ HTML</button>
+          <button class="pact primary" id="dl-site-btn" onclick="downloadSite()" disabled>↓ Site</button>
+        </div>
+      </div>
+
+      <div class="preview-wrap" id="preview-wrap">
+        <div class="empty-state" id="empty-state">
+          <div class="empty-icon">💹</div>
+          <div class="empty-title">Your app appears here</div>
+          <div class="empty-sub">Select a template below or describe your app and hit Build. Watch it stream in real time.</div>
+        </div>
+        <div class="stream-view" id="stream-view">
+          <div class="stream-header">
+            <div class="sdot active"></div>
+            <span class="stream-label" id="stream-label">Streaming...</span>
+            <span class="stream-stats" id="stream-stats">0 tokens</span>
+          </div>
+          <div class="stream-pre" id="stream-pre"></div>
+        </div>
+        <iframe id="preview" title="Generated app" style="display:none;width:100%;height:100%;min-height:500px;border:none;position:absolute;inset:0;"></iframe>
+        <div class="code-view" id="code-view">
+          <pre id="code-pre">// Code will appear here after generation</pre>
+        </div>
+        <div style="display:none;height:100%;" id="compare-wrap">
+          <div class="compare-grid" id="compare-grid">
+            <div class="cmp-card">
+              <div class="cmp-header" style="color:var(--claude);"><span class="pdot" style="background:var(--claude)"></span>Claude <span id="ct-claude" style="margin-left:auto;font-size:9px;color:var(--muted)"></span></div>
+              <div class="cmp-empty" id="ce-claude">waiting...</div>
+              <iframe id="ci-claude" class="cmp-iframe" style="display:none;" title="Claude output"></iframe>
+            </div>
+            <div class="cmp-card">
+              <div class="cmp-header" style="color:var(--openai);"><span class="pdot" style="background:var(--openai)"></span>GPT-4o <span id="ct-openai" style="margin-left:auto;font-size:9px;color:var(--muted)"></span></div>
+              <div class="cmp-empty" id="ce-openai">waiting...</div>
+              <iframe id="ci-openai" class="cmp-iframe" style="display:none;" title="GPT-4o output"></iframe>
+            </div>
+            <div class="cmp-card">
+              <div class="cmp-header" style="color:var(--gemini);"><span class="pdot" style="background:var(--gemini)"></span>Gemini <span id="ct-gemini" style="margin-left:auto;font-size:9px;color:var(--muted)"></span></div>
+              <div class="cmp-empty" id="ce-gemini">waiting...</div>
+              <iframe id="ci-gemini" class="cmp-iframe" style="display:none;" title="Gemini output"></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRANSPARENCY PANEL -->
+      <div class="transparency" id="transparency" style="display:none;">
+        <div class="trans-tabs">
+          <button class="ttab active" onclick="switchTransTab('prompt')" id="ttab-prompt">
+            System prompt <span class="tbadge" id="tb-chars">—</span>
+          </button>
+          <button class="ttab" onclick="switchTransTab('cost')" id="ttab-cost">
+            Cost & tokens <span class="tbadge" id="tb-cost">—</span>
+          </button>
+          <button class="ttab" onclick="switchTransTab('diff')" id="ttab-diff">
+            Skills diff <span class="tbadge" id="tb-diff">—</span>
+          </button>
+        </div>
+        <div class="trans-body" id="trans-body">
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);">Generate an app to see transparency data</div>
+        </div>
+      </div>
+
+    </div><!-- /preview-area -->
+
+  </div><!-- /right -->
 </div>
+
+<script src="skills.js"></script>
+<script>
+// ── State ─────────────────────────────────────────────────────────
+let provider = 'claude';
+let generatedHTML = '';
+let tokenCount = 0;
+let inputTokens = 0;
+let outputTokens = 0;
+let lastSystemPrompt = '';
+let activeSkills = new Set(['frontend-design','chart-js','fintech-ui','api-integration']);
+let currentTheme = 'dark';
+let withoutSkillsHTML = '';
+let withSkillsHTML = '';
+
+// ── Templates ─────────────────────────────────────────────────────
+const TEMPLATES = {
+  fintech: [
+    { icon:'🪙', name:'Crypto Trading', desc:'BTC/ETH/SOL live prices, candlestick chart, portfolio P&L, watchlist', demo:'../demos/crypto-trading/', prompt:'Build a dark premium crypto trading dashboard. BTC ETH SOL live prices from CoinGecko API. Candlestick price chart with 1D 1W 1M 3M switcher. Portfolio P&L tracker with donut allocation. Watchlist with 8 stocks SVG sparklines live updates. Scrolling ticker bar.' },
+    { icon:'📊', name:'Wealth Management', desc:'Asset allocation, portfolio performance, holdings table, risk score', demo:'../demos/wealth-management/', prompt:'Build a dark premium wealth management dashboard. Asset allocation donut chart 5 categories. Portfolio performance line chart vs benchmark with period switcher. Holdings table with symbol shares value P&L 24h sparkline. Risk score meter. Top movers cards.' },
+    { icon:'🔍', name:'Stock Screener', desc:'PE ratio, market cap, sector filters, sparkline results table', demo:'../demos/nexvault/', prompt:'Build a dark premium stock screener. Filter sidebar with PE ratio range, market cap tiers, sector checkboxes, 52-week range slider. Results table with symbol, price, PE, market cap, sector, 52w performance, sparkline. Sort by any column. Export CSV button.' },
+    { icon:'💹', name:'Order Flow', desc:'Live buy/sell stream, market depth, trade execution feed', demo:'../demos/order-flow/', prompt:'Build a dark premium order flow trading visualiser. Live animated buy sell order stream with color-coded entries. Market depth chart showing bid ask walls. Price ladder with highlighted best bid ask. Trade execution feed with timestamps. Volume profile bar chart.' },
+    { icon:'🏦', name:'Banking Dashboard', desc:'Account overview, transactions, spending by category, savings goals', demo:'../demos/banking/', prompt:'Build a dark premium banking dashboard. Virtual credit card with chip animation. Account balance overview checking savings investment. Monthly spending bar chart by category. Recent transactions list merchant icons amounts. Savings goals progress bars.' },
+  ],
+  business: [
+    { icon:'🤖', name:'AI Chat Assistant', desc:'GPT streaming chat, conversation memory, typing indicator, message history', skills:['llm-integration'], demo:'../demos/ai-chat/', prompt:'Build a dark premium AI chat assistant interface. Full-height chat layout. Message bubbles user right assistant left. Typing indicator with animated dots. Streaming text appears word by word with cursor. Message input with send button. Chat history sidebar with conversation list. Token usage counter. Model selector dropdown. System prompt editor. Export chat button. Keyboard shortcut Cmd+Enter to send.' },
+    { icon:'📈', name:'SaaS Analytics', desc:'MRR, churn, DAU metrics, revenue trend, funnel breakdown', demo:'../demos/saas-analytics/', prompt:'Build a dark premium SaaS analytics dashboard. MRR ARR churn DAU metric cards with trend indicators. Revenue growth line chart monthly breakdown. User acquisition funnel chart. Subscription plan breakdown donut. Top customers table MRR and growth. Cohort retention heatmap grid.' },
+    { icon:'👥', name:'CRM Pipeline', desc:'Contact table, deal kanban, activity feed, conversion metrics', demo:'../demos/nexvault/', prompt:'Build a dark premium CRM pipeline dashboard. Deal kanban board with drag-drop columns prospect qualified proposal closed. Contact table with avatar name company deal value stage. Activity feed timeline. Conversion funnel metrics. Win rate chart by month.' },
+    { icon:'🛒', name:'Ecommerce', desc:'Orders, revenue, inventory, top products, returns tracking', demo:'../demos/pulse-analytics/', prompt:'Build a dark premium ecommerce analytics dashboard. Revenue GMV orders metric cards. Sales trend line chart with comparison period. Top products table with image name revenue units margin sparkline. Inventory alerts low stock. Returns rate chart by category.' },
+    { icon:'🧰', name:'Dev Monitor', desc:'API health, error rates, response times, deployment log', demo:'../demos/pulse-analytics/', prompt:'Build a dark premium developer tools monitoring dashboard. API endpoint health table with status latency uptime. Error rate line chart with severity breakdown. Response time percentile chart p50 p95 p99. Recent deployment log with commit SHA status. Active alerts panel.' },
+    { icon:'🗂️', name:'Project Tracker', desc:'Sprint board, burndown chart, team velocity, open issues', demo:'../demos/pulse-analytics/', prompt:'Build a dark premium project management dashboard. Sprint board kanban todo in-progress review done. Burndown chart remaining vs ideal. Team velocity bar chart by sprint. Open issues table with priority assignee labels. Team workload distribution donut.' },
+  ],
+  llm: [
+    { icon:'💬', name:'AI Chat Assistant', desc:'SSE streaming, conversation memory, typing indicator, message history', skills:['llm-integration'], demo:'../demos/ai-chat/', prompt:'Build a dark premium AI chat assistant interface. Full-height chat layout. Message bubbles user right assistant left. Typing indicator with animated dots. Streaming text appears word by word with cursor. Message input with send button. Chat history sidebar with conversation list. Token usage counter. Model selector dropdown. System prompt editor. Export chat button.' },
+    { icon:'🔍', name:'AI Code Reviewer', desc:'Paste code → structured review with scores, issues, and streaming summary', skills:['llm-integration'], demo:'../demos/ai-code-reviewer/', prompt:'Build a dark premium AI code reviewer. Two-panel layout: code input left with syntax highlighting, review results right. Quality security performance readability score cards A-F grades. Issues list with critical warning suggestion severity levels and line numbers. Fix suggestions for each issue. Streaming AI summary at the bottom. Load sample buttons for good and bad code examples.' },
+    { icon:'📄', name:'AI Doc Summariser', desc:'Paste text → key points, sentiment score, topics, streaming summary', skills:['llm-integration'], demo:'../demos/ai-doc-summariser/', prompt:'Build a dark premium AI document summariser. Two-panel layout. Left: large textarea for pasting document text with word count. Right: structured results showing key points numbered list, sentiment bar chart positive to negative, topic tags, reading time and word stats, streaming summary paragraph. Paste sample button included.' },
+    { icon:'🔀', name:'Product Descriptions n:5', desc:'One product → 5 tone variations in parallel, compare and copy', skills:['llm-integration'], demo:'../demos/ai-product-descriptions/', prompt:'Build a dark premium AI product description generator. Left panel: form with product name, category, features, target audience, tone selection checkboxes. Right panel: 5 result cards generated in parallel showing different tone variations professional casual technical emotional minimal. Each card has the description, word count, and copy button. Highlight selected card. Show that all 5 are generated in one API call.' },
+    { icon:'🗄️', name:'AI SQL Builder', desc:'Natural language → SQL query with ML intent classification and explanation', skills:['llm-integration'], demo:'../demos/ai-sql-builder/', prompt:'Build a dark premium natural language to SQL query builder. Show database schema as clickable table chips at top. Pipeline visualiser showing 5 steps: parse intent classify complexity build context generate SQL stream explanation. Natural language input with example queries. Output panel with SQL tab showing syntax-highlighted query and Explanation tab with streaming GPT explanation. Complexity badge showing query type.' },
+  ]
+};
+
+// ── Render template gallery ────────────────────────────────────────
+function renderGallery() {
+  ['fintech','business','llm'].forEach(cat => {
+    const grid = document.getElementById('tgrid-' + cat);
+    grid.innerHTML = TEMPLATES[cat].map((t,i) => `
+      <div class="tmpl-card" data-prompt="${t.prompt.replace(/"/g,'&quot;')}">
+        <span class="tmpl-icon">${t.icon}</span>
+        <div class="tmpl-name">${t.name}</div>
+        <div class="tmpl-desc">${t.desc}</div>
+        <div class="tmpl-actions">
+          <button class="tmpl-btn preview" onclick="previewTemplate('${t.demo}',event)">▶ Preview</button>
+          <button class="tmpl-btn" onclick="selectTemplate(${JSON.stringify(t.prompt).replace(/'/g,"&#39;")},event,${JSON.stringify(t.skills||[])})">⚡ Generate</button>
+        </div>
+      </div>
+    `).join('');
+  });
+}
+
+function previewTemplate(demoUrl, e) {
+  e && e.stopPropagation();
+
+  console.log('previewTemplate called:', demoUrl);
+
+  // Step 1: hide gallery, show preview area
+  document.getElementById('gallery').style.display = 'none';
+  const previewArea = document.getElementById('preview-area');
+  previewArea.style.display = 'flex';
+  previewArea.style.flexDirection = 'column';
+  previewArea.style.height = '100%';
+
+  // Step 2: hide all panels inside preview-wrap
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('stream-view').style.display = 'none';
+  document.getElementById('code-view').style.display = 'none';
+  document.getElementById('compare-wrap').style.display = 'none';
+
+  // Step 3: show iframe with explicit styles
+  const iframe = document.getElementById('preview');
+  iframe.style.display = 'block';
+  iframe.style.position = 'absolute';
+  iframe.style.top = '0';
+  iframe.style.left = '0';
+  iframe.style.width = '100%';
+  iframe.style.height = '100%';
+  iframe.style.border = 'none';
+  iframe.style.zIndex = '10';
+
+  // Step 4: load the URL
+  iframe.src = demoUrl;
+  iframe.onload = () => {
+    console.log('iframe loaded:', demoUrl);
+    setStatus('✓ Preview loaded', 'done');
+  };
+
+  // Step 5: update tabs
+  ['preview','code','stream','compare'].forEach(t => {
+    document.getElementById('ptab-'+t)?.classList.remove('active');
+  });
+  document.getElementById('ptab-preview')?.classList.add('active');
+
+  setStatus('Loading preview...', 'active');
+  console.log('preview-area display:', previewArea.style.display);
+  console.log('preview-wrap height:', document.getElementById('preview-wrap').offsetHeight);
+}
+
+function selectTemplate(prompt, e, skills) {
+  e && e.stopPropagation();
+  document.getElementById('prompt').value = prompt;
+  updateCharCount();
+  // Auto-activate recommended skills for this template
+  if (skills && skills.length) {
+    skills.forEach(skill => {
+      if (SKILL_CONTENTS[skill] && !activeSkills.has(skill)) {
+        activeSkills.add(skill);
+        const chip = document.getElementById('sc-' + skill.replace('-','').replace('integration',''));
+        if (chip) chip.classList.add('on');
+      }
+    });
+    renderSkillsPanel();
+  }
+  if(document.getElementById('auto-build').checked) {
+    buildApp();
+  } else {
+    showPreviewArea();
+    setStatus('Template loaded — hit Build App to generate', '');
+    document.getElementById('empty-state').style.display = 'flex';
+    document.getElementById('preview').style.display = 'none';
+    document.getElementById('stream-view').classList.remove('show');
+  }
+}
+
+function showGallery() {
+  document.getElementById('gallery').style.display = 'block';
+  document.getElementById('preview-area').classList.remove('show');
+}
+
+function showPreviewArea() {
+  document.getElementById('gallery').style.display = 'none';
+  document.getElementById('preview-area').classList.add('show');
+}
+
+// ── Provider ──────────────────────────────────────────────────────
+function setProvider(p) {
+  provider = p;
+  ['claude','openai','gemini','compare'].forEach(id => {
+    const btn = document.getElementById('pb-' + id);
+    if(!btn) return;
+    btn.className = 'prov-btn';
+    if(id === p) btn.classList.add('ac','ac-' + id);
+  });
+  document.getElementById('key-claude').style.display = ['claude','compare'].includes(p) ? '' : 'none';
+  document.getElementById('key-openai').style.display = ['openai','compare'].includes(p) ? '' : 'none';
+  document.getElementById('key-gemini').style.display = ['gemini','compare'].includes(p) ? '' : 'none';
+}
+
+// ── Theme ─────────────────────────────────────────────────────────
+const THEME_MAP = {
+  dark: 'Dark premium theme. bg #080c12. accent #00d4aa. text #e8edf5. Syne + DM Mono fonts.',
+  light: 'Light clean theme. bg #ffffff. surface #f8fafc. accent #0066ff. text #1a1a2e. System fonts.',
+  ocean: 'Ocean dark theme. bg #0a192f. surface #112240. accent #64ffda. text #ccd6f6. monospace fonts.',
+  warm: 'Warm dark theme. bg #1a1209. surface #2d1f0d. accent #f59e0b. text #fde68a. Playfair + Serif fonts.'
+};
+
+function setTheme(el, theme) {
+  document.querySelectorAll('.theme-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  currentTheme = theme;
+}
+
+function getThemePrompt() {
+  return THEME_MAP[currentTheme] || THEME_MAP.dark;
+}
+
+function getLayoutPrompt() {
+  const layouts = { sidebar:'Use sidebar navigation layout.', topnav:'Use top navigation layout.', fullwidth:'Use fullwidth layout without sidebar.', cards:'Use card grid layout.' };
+  return layouts[document.getElementById('layout-select').value] || '';
+}
+
+function getFontPrompt() {
+  const fonts = { 'syne-mono':'Syne display + DM Mono body fonts.', playfair:'Playfair Display + Source Serif 4 fonts.', jakarta:'Plus Jakarta Sans + Fira Code fonts.', system:'System default fonts.' };
+  return fonts[document.getElementById('font-select').value] || '';
+}
+
+// ── Skills ────────────────────────────────────────────────────────
+function toggleSkill(name, btn) {
+  if(activeSkills.has(name)) { activeSkills.delete(name); btn.classList.remove('on'); }
+  else { activeSkills.add(name); btn.classList.add('on'); }
+  updateSkillStats();
+}
+
+function expandSkill(e, name) {
+  e.stopPropagation();
+  const drawer = document.getElementById('sd-' + name);
+  if(!drawer) return;
+  if(drawer.classList.contains('open')) { drawer.classList.remove('open'); return; }
+  const content = window.SKILL_CONTENTS?.[name] || '';
+  if(!content) { drawer.innerHTML = '<div style="color:var(--muted2)">Skill not loaded</div>'; drawer.classList.add('open'); return; }
+  const lines = content.split('\n').filter(l => l.trim() && !l.startsWith('#') && !l.startsWith('**') && l.length > 10 && !l.startsWith('---')).slice(0,8);
+  drawer.innerHTML = `<div class="skill-stat">${content.length.toLocaleString()} chars · ${content.split('\n').length} lines added to system prompt</div>${lines.map(l => `<div class="rule">${l.trim().replace(/^[-*]\s*/,'').substring(0,80)}</div>`).join('')}`;
+  drawer.classList.add('open');
+}
+
+function updateSkillStats() {
+  const total = [...activeSkills].reduce((a, k) => a + (window.SKILL_CONTENTS?.[k]?.length || 0), 0);
+  document.getElementById('total-skill-chars').textContent = total ? `+${total.toLocaleString()} chars` : 'none active';
+}
+
+function initSkills() {
+  if(!window.SKILL_CONTENTS) { document.getElementById('total-skill-chars').textContent = 'skills not loaded'; return; }
+  updateSkillStats();
+}
+
+// ── Prompt builder ────────────────────────────────────────────────
+function buildSystemPrompt() {
+  const skills = [...activeSkills].map(k => window.SKILL_CONTENTS?.[k] || '').filter(Boolean).join('\n\n---\n\n');
+  const theme = getThemePrompt();
+  const layout = getLayoutPrompt();
+  const font = getFontPrompt();
+  return `You are an expert frontend engineer. Generate a complete, single-file HTML application.
+
+THEME: ${theme}
+LAYOUT: ${layout}
+FONTS: ${font}
+
+SKILL GUIDELINES:
+${skills || 'No skills active — use your best judgment.'}
+
+OUTPUT RULES:
+- Output ONLY raw HTML. No markdown, no code blocks, no explanation.
+- Single self-contained HTML file with all CSS and JS inline.
+- Must be visually impressive and production-quality.
+- Include Chart.js from cdnjs if charts are needed.
+- Include Google Fonts from fonts.googleapis.com.
+- Make it fully functional with realistic mock data.
+- Start with <!DOCTYPE html> directly.`;
+}
+
+// ── Status ────────────────────────────────────────────────────────
+function setStatus(text, state) {
+  document.getElementById('stext').textContent = text;
+  const dot = document.getElementById('sdot');
+  dot.className = 'sdot' + (state ? ' ' + state : '');
+}
+
+// ── Tab switching ─────────────────────────────────────────────────
+function switchTab(tab) {
+  ['preview','code','stream','compare'].forEach(t => {
+    document.getElementById('ptab-' + t)?.classList.remove('active');
+  });
+  document.getElementById('ptab-' + tab)?.classList.add('active');
+  document.getElementById('preview').style.display = tab === 'preview' ? 'block' : 'none';
+  document.getElementById('code-view').style.display = tab === 'code' ? 'block' : 'none';
+  document.getElementById('stream-view').classList.toggle('show', tab === 'stream');
+  document.getElementById('compare-wrap').style.display = tab === 'compare' ? 'block' : 'none';
+  document.getElementById('empty-state').style.display = 'none';
+}
+
+function switchTransTab(tab) {
+  ['prompt','cost','diff'].forEach(t => document.getElementById('ttab-' + t)?.classList.remove('active'));
+  document.getElementById('ttab-' + tab)?.classList.add('active');
+  renderTransparency(tab);
+}
+
+// ── Streaming helpers ─────────────────────────────────────────────
+function showStreaming(label) {
+  showPreviewArea();
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('preview').style.display = 'none';
+  document.getElementById('stream-view').classList.add('show');
+  document.getElementById('stream-label').textContent = 'Streaming from ' + label + '...';
+  document.getElementById('stream-pre').textContent = '';
+  document.getElementById('code-view').style.display = 'none';
+  tokenCount = 0; inputTokens = 0; outputTokens = 0;
+  switchTab('stream');
+  document.getElementById('ptab-stream').classList.add('active');
+}
+
+function appendStream(chunk) {
+  const pre = document.getElementById('stream-pre');
+  pre.textContent += chunk;
+  pre.scrollTop = pre.scrollHeight;
+  tokenCount += Math.ceil(chunk.length / 4);
+  outputTokens = tokenCount;
+  document.getElementById('stream-stats').textContent = tokenCount.toLocaleString() + ' tokens';
+}
+
+function showPreview(html) {
+  document.getElementById('stream-view').classList.remove('show');
+  const iframe = document.getElementById('preview');
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.open(); doc.write(html); doc.close();
+  iframe.style.display = 'block';
+  generatedHTML = html;
+  document.getElementById('code-pre').textContent = html;
+  document.getElementById('dl-btn').disabled = false;
+  document.getElementById('dl-site-btn').disabled = false;
+  document.getElementById('share-btn').disabled = false;
+  document.getElementById('transparency').style.display = 'block';
+  updateTransparency();
+  switchTab('preview');
+}
+
+function extractHTML(text) {
+  const block = text.match(/```(?:html)?\n?([\s\S]*?)```/);
+  if(block) return block[1].trim();
+  const dt = text.indexOf('<!DOCTYPE');
+  if(dt >= 0) return text.slice(dt).trim();
+  const ht = text.indexOf('<html');
+  if(ht >= 0) return text.slice(ht).trim();
+  return text.trim();
+}
+
+// ── Claude API ────────────────────────────────────────────────────
+async function streamClaude(prompt, systemPrompt, key) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'x-api-key':key, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+    body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:8000, stream:true, system:systemPrompt, messages:[{role:'user',content:prompt}] })
+  });
+  if(!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Claude API error'); }
+  const reader = res.body.getReader(); const decoder = new TextDecoder(); let full = '';
+  while(true) {
+    const {done,value} = await reader.read(); if(done) break;
+    for(const line of decoder.decode(value).split('\n')) {
+      if(!line.startsWith('data:')) continue;
+      try {
+        const d = JSON.parse(line.slice(5));
+        if(d.type==='message_start') inputTokens = d.message?.usage?.input_tokens || 0;
+        if(d.type==='message_delta') outputTokens = d.usage?.output_tokens || tokenCount;
+        if(d.type==='content_block_delta'&&d.delta?.text) { full+=d.delta.text; appendStream(d.delta.text); }
+      } catch {}
+    }
+  }
+  return full;
+}
+
+// ── OpenAI API ────────────────────────────────────────────────────
+async function streamOpenAI(prompt, systemPrompt, key) {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+key },
+    body:JSON.stringify({ model:'gpt-4o', max_tokens:8000, stream:true, messages:[{role:'system',content:systemPrompt},{role:'user',content:prompt}] })
+  });
+  if(!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'OpenAI API error'); }
+  const reader = res.body.getReader(); const decoder = new TextDecoder(); let full = '';
+  while(true) {
+    const {done,value} = await reader.read(); if(done) break;
+    for(const line of decoder.decode(value).split('\n')) {
+      if(!line.startsWith('data:')||line.includes('[DONE]')) continue;
+      try {
+        const d = JSON.parse(line.slice(5));
+        const delta = d.choices?.[0]?.delta?.content;
+        if(delta) { full+=delta; appendStream(delta); }
+        if(d.usage) { inputTokens=d.usage.prompt_tokens; outputTokens=d.usage.completion_tokens; }
+      } catch {}
+    }
+  }
+  return full;
+}
+
+// ── Gemini API ────────────────────────────────────────────────────
+async function callGemini(prompt, systemPrompt, key) {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ system_instruction:{parts:[{text:systemPrompt}]}, contents:[{parts:[{text:prompt}]}], generationConfig:{maxOutputTokens:8000} })
+  });
+  if(!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Gemini API error'); }
+  const data = await res.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  for(let i=0;i<text.length;i+=40) { appendStream(text.slice(i,i+40)); await new Promise(r=>setTimeout(r,8)); }
+  return text;
+}
+
+// ── Main build ────────────────────────────────────────────────────
+async function buildApp() {
+  const prompt = document.getElementById('prompt').value.trim();
+  if(!prompt) { alert('Please describe what you want to build'); return; }
+  const systemPrompt = buildSystemPrompt();
+  lastSystemPrompt = systemPrompt;
+  const btn = document.getElementById('build-btn');
+  btn.classList.add('loading'); btn.disabled = true;
+  setStatus('Generating...', 'active');
+  try {
+    if(provider === 'compare') { await buildCompare(prompt, systemPrompt); }
+    else { await buildSingle(prompt, systemPrompt); }
+  } catch(e) {
+    setStatus('Error: ' + e.message, 'err');
+    alert('Error: ' + e.message);
+  } finally { btn.classList.remove('loading'); btn.disabled = false; }
+}
+
+async function buildSingle(prompt, systemPrompt) {
+  const names = {claude:'Claude',openai:'GPT-4o',gemini:'Gemini'};
+  showStreaming(names[provider]);
+  const key = document.getElementById('k-'+provider).value.trim();
+  if(!key) throw new Error('Please enter your ' + names[provider] + ' API key');
+  let raw = '';
+  if(provider==='claude') raw = await streamClaude(prompt,systemPrompt,key);
+  else if(provider==='openai') raw = await streamOpenAI(prompt,systemPrompt,key);
+  else raw = await callGemini(prompt,systemPrompt,key);
+  const html = extractHTML(raw);
+  showPreview(html);
+  setStatus(`Done · ${inputTokens.toLocaleString()} in + ${outputTokens.toLocaleString()} out · ${(html.length/1024).toFixed(1)}kb`, 'done');
+  const enc = btoa(encodeURIComponent(prompt));
+  history.replaceState(null,'','?p='+enc+'&prov='+provider);
+}
+
+async function buildCompare(prompt, systemPrompt) {
+  showPreviewArea();
+  document.getElementById('ptab-compare').style.display = '';
+  switchTab('compare');
+  document.getElementById('compare-wrap').style.display = 'block';
+  const keys = { claude:document.getElementById('k-claude').value.trim(), openai:document.getElementById('k-openai').value.trim(), gemini:document.getElementById('k-gemini').value.trim() };
+  const missing = Object.entries(keys).filter(([,v])=>!v).map(([k])=>k);
+  if(missing.length) throw new Error('Please enter API keys for: ' + missing.join(', '));
+  setStatus('Running all 3 providers in parallel...', 'active');
+  ['claude','openai','gemini'].forEach(p => {
+    document.getElementById('ce-'+p).textContent = 'generating...';
+    document.getElementById('ce-'+p).style.display = 'flex';
+    document.getElementById('ci-'+p).style.display = 'none';
+  });
+  const providers = [
+    {id:'claude', fn:()=>streamClaude(prompt,systemPrompt,keys.claude)},
+    {id:'openai', fn:()=>streamOpenAI(prompt,systemPrompt,keys.openai)},
+    {id:'gemini', fn:()=>callGemini(prompt,systemPrompt,keys.gemini)}
+  ];
+  await Promise.allSettled(providers.map(async p => {
+    try {
+      const raw = await p.fn();
+      const html = extractHTML(raw);
+      document.getElementById('ct-'+p.id).textContent = Math.ceil(raw.length/4).toLocaleString()+' tokens';
+      document.getElementById('ce-'+p.id).style.display = 'none';
+      const iframe = document.getElementById('ci-'+p.id);
+      iframe.style.display = 'block';
+      const doc = iframe.contentDocument||iframe.contentWindow.document;
+      doc.open(); doc.write(html); doc.close();
+    } catch(e) { document.getElementById('ce-'+p.id).textContent = 'Error: '+e.message; }
+  }));
+  setStatus('All 3 complete', 'done');
+}
+
+// ── Without vs With ───────────────────────────────────────────────
+async function runWithoutWith() {
+  const prompt = document.getElementById('prompt').value.trim();
+  if(!prompt) { alert('Please enter a prompt first'); return; }
+  const key = document.getElementById('k-claude').value.trim();
+  if(!key) { alert('Please enter your Claude API key'); return; }
+  showPreviewArea();
+  document.getElementById('ptab-compare').style.display = '';
+  switchTab('compare');
+  document.getElementById('compare-wrap').style.display = 'block';
+  setStatus('Running: without skills vs with skills...', 'active');
+  const barePrompt = `You are an expert frontend engineer. Build a complete HTML app. Output ONLY raw HTML.\n\nUser request: ${prompt}`;
+  const withPrompt = buildSystemPrompt();
+  ['claude','openai','gemini'].forEach(p => {
+    document.getElementById('ce-'+p).textContent = p==='claude' ? 'without skills...' : p==='openai' ? 'with skills...' : 'hidden';
+    document.getElementById('ce-'+p).style.display = p==='gemini' ? 'none' : 'flex';
+    document.getElementById('ci-'+p).style.display = 'none';
+    const hdr = document.getElementById('ct-'+p);
+    if(p==='claude') document.querySelector('#compare-grid .cmp-card:nth-child(1) .cmp-header').innerHTML = `<span class="pdot" style="background:var(--red)"></span>Without skills`;
+    if(p==='openai') document.querySelector('#compare-grid .cmp-card:nth-child(2) .cmp-header').innerHTML = `<span class="pdot" style="background:var(--green)"></span>With all skills`;
+  });
+  document.querySelector('#compare-grid .cmp-card:nth-child(3)').style.display = 'none';
+  await Promise.allSettled([
+    (async()=>{ try { const raw=await streamClaude(prompt,barePrompt,key); const html=extractHTML(raw); document.getElementById('ce-claude').style.display='none'; const iframe=document.getElementById('ci-claude'); iframe.style.display='block'; const doc=iframe.contentDocument||iframe.contentWindow.document; doc.open();doc.write(html);doc.close(); } catch(e){document.getElementById('ce-claude').textContent='Error: '+e.message;} })(),
+    (async()=>{ try { const raw=await streamClaude(prompt,withPrompt,key); const html=extractHTML(raw); document.getElementById('ce-openai').style.display='none'; const iframe=document.getElementById('ci-openai'); iframe.style.display='block'; const doc=iframe.contentDocument||iframe.contentWindow.document; doc.open();doc.write(html);doc.close(); } catch(e){document.getElementById('ce-openai').textContent='Error: '+e.message;} })()
+  ]);
+  document.querySelector('#compare-grid .cmp-card:nth-child(3)').style.display = '';
+  setStatus('Comparison done — spot the difference', 'done');
+}
+
+// ── Transparency ──────────────────────────────────────────────────
+function updateTransparency() {
+  const chars = lastSystemPrompt.length;
+  document.getElementById('tb-chars').textContent = chars.toLocaleString() + ' chars';
+  const cost = estimateCost(inputTokens || Math.ceil(lastSystemPrompt.length/4), outputTokens || tokenCount);
+  document.getElementById('tb-cost').textContent = '$' + cost.claude.toFixed(4);
+  document.getElementById('tb-diff').textContent = activeSkills.size + ' skills';
+  renderTransparency('prompt');
+}
+
+function estimateCost(inp, out) {
+  return {
+    claude: (inp * 3/1000000) + (out * 15/1000000),
+    openai: (inp * 5/1000000) + (out * 15/1000000),
+    gemini: (inp * 0.35/1000000) + (out * 1.05/1000000)
+  };
+}
+
+function renderTransparency(tab) {
+  const body = document.getElementById('trans-body');
+  if(tab === 'prompt') {
+    const sections = lastSystemPrompt.split('\n\n---\n\n');
+    body.innerHTML = `<button class="copy-btn" onclick="navigator.clipboard.writeText(${JSON.stringify(lastSystemPrompt)})">copy</button><div class="sysprompt">${escHtml(lastSystemPrompt.substring(0,2000))}${lastSystemPrompt.length>2000?'\n\n[... '+(lastSystemPrompt.length-2000).toLocaleString()+' more chars ...]':''}</div>`;
+  } else if(tab === 'cost') {
+    const inp = inputTokens || Math.ceil(lastSystemPrompt.length/4);
+    const out = outputTokens || tokenCount;
+    const c = estimateCost(inp, out);
+    body.innerHTML = `<div class="cost-grid">
+      <div class="cost-card"><div class="cost-provider"><span class="pdot" style="background:var(--claude);width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px;"></span>Claude Sonnet 4.6</div><div class="cost-amount">$${c.claude.toFixed(4)}</div><div class="cost-tokens">${inp.toLocaleString()} in · ${out.toLocaleString()} out</div></div>
+      <div class="cost-card"><div class="cost-provider"><span class="pdot" style="background:var(--openai);width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px;"></span>GPT-4o</div><div class="cost-amount">$${c.openai.toFixed(4)}</div><div class="cost-tokens">${inp.toLocaleString()} in · ${out.toLocaleString()} out</div></div>
+      <div class="cost-card"><div class="cost-provider"><span class="pdot" style="background:var(--gemini);width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px;"></span>Gemini 1.5 Flash</div><div class="cost-amount">$${c.gemini.toFixed(4)}</div><div class="cost-tokens">${inp.toLocaleString()} in · ${out.toLocaleString()} out</div></div>
+    </div><div class="cost-note">Real token counts from API response. Prices: Claude $3/$15 · GPT-4o $5/$15 · Gemini $0.35/$1.05 per 1M tokens.</div>`;
+  } else if(tab === 'diff') {
+    const rawPrompt = document.getElementById('prompt').value.trim();
+    const skillText = [...activeSkills].map(k => window.SKILL_CONTENTS?.[k] || '').join('\n\n');
+    body.innerHTML = `<div class="diff-grid">
+      <div class="diff-col"><div class="diff-col-title">❌ Without skills <span class="diff-token-count">${Math.ceil(rawPrompt.length/4)} tokens</span></div><div class="diff-content">${escHtml(rawPrompt)}</div></div>
+      <div class="diff-col"><div class="diff-col-title">✅ With ${activeSkills.size} skills <span class="diff-token-count">${Math.ceil(lastSystemPrompt.length/4).toLocaleString()} tokens</span></div><div class="diff-content"><span class="added">${escHtml(skillText.substring(0,600))}${skillText.length>600?'\n[... '+(skillText.length-600).toLocaleString()+' more chars of skill context ...]':''}</span></div></div>
+    </div>`;
+  }
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Download ──────────────────────────────────────────────────────
+function downloadApp() {
+  if(!generatedHTML) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([generatedHTML],{type:'text/html'}));
+  a.download = 'app-' + Date.now() + '.html';
+  a.click();
+}
+
+function downloadSite() {
+  if(!generatedHTML) return;
+  const prompt = document.getElementById('prompt').value.trim();
+  const siteName = prompt.substring(0,30).replace(/[^a-z0-9]/gi,'-').toLowerCase();
+  const readme = `# ${siteName}\n\nGenerated with skillforge-ai + zero-code-apps\nhttps://kirti.github.io/zero-code-apps/builder\n\n## Deploy\n\nOpen index.html in any browser, or deploy to:\n- Netlify: drag this folder to netlify.com/drop\n- Vercel: vercel deploy\n- GitHub Pages: push to a repo and enable Pages\n`;
+  const zip = `data:application/zip;base64,`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([generatedHTML],{type:'text/html'}));
+  a.download = siteName + '-site.html';
+  a.click();
+  setTimeout(()=>{
+    const rb = document.createElement('a');
+    rb.href = URL.createObjectURL(new Blob([readme],{type:'text/plain'}));
+    rb.download = 'README.md';
+    rb.click();
+  }, 500);
+}
+
+function shareApp() {
+  navigator.clipboard.writeText(location.href).then(()=>{
+    const btn = document.getElementById('share-btn');
+    btn.textContent = '✓ Copied';
+    setTimeout(()=>{ btn.textContent = '🔗 Share'; },2000);
+  });
+}
+
+function toggleKey(id) {
+  const el = document.getElementById(id);
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+function updateCharCount() {
+  const len = document.getElementById('prompt').value.length;
+  document.getElementById('char-count').textContent = len + ' chars';
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  renderGallery();
+  initSkills();
+  const p = new URLSearchParams(location.search);
+  if(p.get('p')) { try { document.getElementById('prompt').value = decodeURIComponent(atob(p.get('p'))); updateCharCount(); } catch{} }
+  if(p.get('prov')) setProvider(p.get('prov'));
+});
+</script>
 </body>
 </html>
